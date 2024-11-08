@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useSignInMutation } from "@/services/api/authApi";
-
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "@/redux/slices/authSlice";
 export const LoginForm = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+  const [errors, setErrors] = useState({});
   const [signIn, { isLoading }] = useSignInMutation();
 
   const togglePasswordVisibility = () => {
@@ -17,13 +22,58 @@ export const LoginForm = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+  const validation = () => {
+    let newErrors = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = "Email is Invalid";
+    }
+    if (!formData.password.trim()) {
+      newErrors.password = "Password is required";
+    }
+    // else if(!passwordRegex.test(formData.password)) {
+    //   newErrors.password = "Invalid password format"
+    // }
+    return newErrors;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const validationErrors = validation();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    try {
+      const response = await signIn(formData).unwrap();
+      navigate("/user/home");
+      const user = response?.data?.user;
+      const token = response?.data?.accessToken;
+      console.log(user);
+      // console.log(token);
+      dispatch(setCredentials({ user }));
+      localStorage.setItem("token", token);
+      setErrors({});
+    } catch (error) {
+      console.log(error);
+      setErrors({ apiError: error?.data?.message });
+    }
+  };
 
   return (
     <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {" "}
         <div className="bg-white p-8 rounded-lg border">
-          <form className=" flex flex-col w-full justify-between">
+          <form
+            className=" flex flex-col w-full justify-between"
+            onSubmit={handleSubmit}
+          >
             <div className="mb-3 flex justify-center items-center flex-col">
               <h3 className="text-gray-800 text-2xl font-bold flex items-center justify-center h-full">
                 Account Signin
@@ -34,12 +84,12 @@ export const LoginForm = () => {
                 {successMessage}
               </span>
             )} */}
-              {/* on error
-            {errors.apiError && (
-              <span className="text-red-500 self-center">
-                {errors.apiError}
-              </span>
-            )} */}
+
+              {errors.apiError && (
+                <span className="text-red-500 self-center">
+                  {errors.apiError}
+                </span>
+              )}
             </div>
 
             <div className=" flex flex-col space-y-3">
@@ -89,9 +139,11 @@ export const LoginForm = () => {
                     </g>
                   </svg>
                 </div>
-                {/* {errors.email && (
-                <span style={{ color: "red" }}>{errors.email}</span>
-              )} */}
+                {errors.email && (
+                  <span className="text-red-600 font-medium">
+                    {errors.email}
+                  </span>
+                )}
               </div>
               <div>
                 <label className="text-gray-800 text-sm mb-1 block">
@@ -119,9 +171,11 @@ export const LoginForm = () => {
                     ></path>
                   </svg>
                 </div>
-                {/* {errors.password && (
-                <span style={{ color: "red" }}>{errors.password}</span>
-              )} */}
+                {errors.password && (
+                  <span className="text-red-600 font-medium">
+                    {errors.password}
+                  </span>
+                )}
               </div>
               <span className="self-end text-xs font-medium">
                 Forgot Password?
@@ -133,7 +187,7 @@ export const LoginForm = () => {
                 type="submit"
                 className="w-full py-2 px-4 text-sm font-semibold rounded-md bg-black hover:bg-black-700 text-white focus:outline-none"
               >
-                {isLoading ? "Creating Account...." : "Create Account"}
+                {isLoading ? "Signing.. In" : "Sign In"}
               </button>
             </div>
 

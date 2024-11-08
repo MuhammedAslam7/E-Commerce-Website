@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import User from "../model/userModel.js";
 import TempUser from "../model/tempUserModel.js";
 import { generateOTP, sendOTPEmail } from "../utils/otp.js";
+import { createAccessToken, createRefreshToken } from "../utils/jwt-token.js";
 
 export const signup = async (req, res) => {
   try {
@@ -119,17 +120,63 @@ export const signIn = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const existUser = await User.findOne({ email });
-    if (!existUser) {
+    const user = await User.findOne({ email });
+    if (!user) {
       return res.status(404).json({ message: "User not exist" });
     }
 
-    const validPassword = await bcryptjs.compare(password, existUser.password);
+    const validPassword = await bcryptjs.compare(password, user.password);
 
     if (!validPassword) {
       return res.status(401).json({ message: "Invalid Password" });
     }
+    // creating token
+    const refreshToken = createRefreshToken(user);
+    const accessToken = createAccessToken(user);
 
-    const refreshToken = User;
-  } catch (error) {}
+    res
+      .status(200)
+      .cookie("refreshToken", refreshToken, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "none",
+        secure: true,
+        maxAge: 60 * 60 * 24 * 1000, // 1 day
+      })
+      .json({
+        success: true,
+        message: "You are logged in ",
+        data: {
+          user: { id: user._id, email: user.email, role: user.role },
+          accessToken,
+        },
+      });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const refreshToken = (req, res) => {
+  const refreshToken = req.cookies?.refreshToken;
+  console.log("Hii");
+
+  if (!refreshToken) {
+    return res.status(401).json({ message: "Refresh token not found" });
+  }
+
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
+    const accessToken = createAccessToken({ _id: decoded.userId });
+    console.log(accessToken);
+    res.json({ accessToken });
+  } catch (error) {
+    res
+      .status(403)
+      .json({ message: "Invalid refresh token", error: error.message });
+  }
+};
+
+export const logout = (req, res) => {
+  res.clearCookie("refreshToken");
+  res.json({ message: "Logged Out Successfully" });
 };

@@ -1,4 +1,4 @@
-import { OTPForm } from "@/components/user/OTPForm";
+import { OTPForm } from "@/components/user/views/OTPForm";
 
 const OTPPage = () => {
   return (

@@ -2,10 +2,10 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { setCredentials, logOut } from "../../redux/slices/authSlice";
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: `${import.meta.env.VITE_API_BASE_URL}/api/auth`,
+  baseUrl: `${import.meta.env.VITE_API_BASE_URL}/api`,
   credentials: "include",
-  prepareHeaders: (headers, { getState }) => {
-    const token = getState()?.auth?.token;
+  prepareHeaders: (headers) => {
+    const token = localStorage.getItem("token");
     if (token) {
       headers.set("authorization", `Bearer ${token}`);
     }
@@ -16,7 +16,7 @@ const baseQuery = fetchBaseQuery({
 const baseQueryWithReauth = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
 
-  if (result?.error?.status === 401) {
+  if (result?.error && result?.error?.status === 401) {
     console.log("Sending refresh token");
     const refreshResult = await baseQuery("/refresh-token", api, extraOptions);
     if (refreshResult?.data) {
@@ -35,7 +35,7 @@ export const authApi = createApi({
   endpoints: (builder) => ({
     signUp: builder.mutation({
       query: (formData) => ({
-        url: "/signup",
+        url: "auth/signup",
         method: "POST",
         body: formData,
       }),
@@ -44,14 +44,14 @@ export const authApi = createApi({
 
     verifyOTP: builder.mutation({
       query: ({ email, otpValue }) => ({
-        url: "/verify-otp",
+        url: "auth/verify-otp",
         method: "POST",
         body: { email, otpValue },
       }),
     }),
     resendOTP: builder.mutation({
       query: ({ email }) => ({
-        url: "/resend-otp",
+        url: "auth/resend-otp",
         method: "POST",
         body: { email },
       }),
@@ -59,7 +59,7 @@ export const authApi = createApi({
 
     signIn: builder.mutation({
       query: (credentials) => ({
-        url: "/signin",
+        url: "/auth/signin",
         method: "POST",
         body: credentials,
       }),
@@ -77,11 +77,3 @@ export const {
   useSignInMutation,
   useProtectedQuery,
 } = authApi;
-
-// resendOTP: builder.mutation({
-//   query: ({ email }) => ({
-//     url: "/resend-otp",
-//     method: "POST",
-//     body: { email },
-//   }),
-// }),

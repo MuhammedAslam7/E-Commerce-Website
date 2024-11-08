@@ -6,6 +6,7 @@ export default {
     extend: {
       fontFamily: {
         jacquard: ['Jacquard 24"', "sans-serif"],
+        rubik: ["Rubik", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -58,3 +59,17 @@ export default {
   },
   plugins: [require("tailwindcss-animate")],
 };
+
+//top add something globally
+
+// function ({ addBase }) {
+//   addBase({
+//     '*': {
+//       '-ms-overflow-style': 'none', // IE and Edge
+//       'scrollbar-width': 'none', // Firefox
+//     },
+//     '*::-webkit-scrollbar': {
+//       display: 'none', // Safari and Chrome
+//     },
+//   });
+// },
