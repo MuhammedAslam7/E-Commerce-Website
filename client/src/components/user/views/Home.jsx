@@ -1,9 +1,13 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
+import { useUserHomeQuery } from "@/services/api/userApi";
 import { ProductCard } from "../layouts/Product";
+import { useEffect } from "react";
 
 export default function Home() {
+  const { data, isLoading, error } = useUserHomeQuery();
+
+  console.log(data);
   return (
     <div className="min-h-screen bg-gray-50">
       <section className="relative">

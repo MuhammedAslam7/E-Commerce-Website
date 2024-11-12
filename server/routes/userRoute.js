@@ -1,4 +1,7 @@
 import express from "express";
+import { userHome } from "../controllers/userController.js";
 const router = express.Router();
 
-router.use("/user");
+router.use("/home", userHome);
+
+export default router;

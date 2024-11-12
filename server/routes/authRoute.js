@@ -14,5 +14,6 @@ router.post("/verify-otp", verifyOTP);
 router.post("/resend-otp", resendOTP);
 router.post("/signin", signIn);
 router.post("/refresh-token", refreshToken);
+router.post("/admin/signin", refreshToken);
 
 export default router;

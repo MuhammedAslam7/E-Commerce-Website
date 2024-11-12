@@ -146,9 +146,9 @@ export const signIn = async (req, res) => {
       .json({
         success: true,
         message: "You are logged in ",
+        accessToken,
         data: {
-          user: { id: user._id, email: user.email, role: user.role },
-          accessToken,
+          user: { userId: user._id, email: user.email, role: user.role },
         },
       });
   } catch (error) {
@@ -156,19 +156,18 @@ export const signIn = async (req, res) => {
   }
 };
 
-export const refreshToken = (req, res) => {
+export const refreshToken = async (req, res) => {
   const refreshToken = req.cookies?.refreshToken;
-  console.log("Hii");
 
   if (!refreshToken) {
     return res.status(401).json({ message: "Refresh token not found" });
   }
 
   try {
-    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
+    const decoded = await jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
     const accessToken = createAccessToken({ _id: decoded.userId });
     console.log(accessToken);
-    res.json({ accessToken });
+    res.json(accessToken);
   } catch (error) {
     res
       .status(403)
@@ -179,4 +178,41 @@ export const refreshToken = (req, res) => {
 export const logout = (req, res) => {
   res.clearCookie("refreshToken");
   res.json({ message: "Logged Out Successfully" });
+};
+
+export const adminSignin = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const admin = User.findOne({ email, role: "admin" });
+    if (!admin) {
+      return res.status(404).json({ message: "This is not a valid admin" });
+    }
+
+    const validPassword = await bcryptjs.compare(password, admin.password);
+
+    if (!validPassword) {
+      return res.status(401).json({ message: "Incorrect Password" });
+    }
+
+    const refreshToken = createRefreshToken(admin);
+    const accessToken = createAccessToken(admin);
+
+    res
+      .status(200)
+      .cookie("refreshToken", refreshToken, {
+        path: "/",
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 60 * 60 * 24 * 1000,
+      })
+      .json({
+        success: true,
+        message: "Login Successful",
+        accessToken,
+        data: {
+          admin: { adminId: admin._id, email: admin.email, role: admin.role },
+        },
+      });
+  } catch (error) {}
 };

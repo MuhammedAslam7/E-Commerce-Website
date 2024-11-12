@@ -1,34 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { setCredentials, logOut } from "../../redux/slices/authSlice";
-
-const baseQuery = fetchBaseQuery({
-  baseUrl: `${import.meta.env.VITE_API_BASE_URL}/api`,
-  credentials: "include",
-  prepareHeaders: (headers) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      headers.set("authorization", `Bearer ${token}`);
-    }
-    return headers;
-  },
-});
-
-const baseQueryWithReauth = async (args, api, extraOptions) => {
-  let result = await baseQuery(args, api, extraOptions);
-
-  if (result?.error && result?.error?.status === 401) {
-    console.log("Sending refresh token");
-    const refreshResult = await baseQuery("/refresh-token", api, extraOptions);
-    if (refreshResult?.data) {
-      api.dispatch(setCredentials({ ...refreshResult.data }));
-      result = await baseQuery(args, api, extraOptions);
-    } else {
-      api.dispatch(logOut());
-    }
-  }
-
-  return result;
-};
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { baseQueryWithReauth } from "./baseApi";
 
 export const authApi = createApi({
   baseQuery: baseQueryWithReauth,
@@ -39,9 +10,7 @@ export const authApi = createApi({
         method: "POST",
         body: formData,
       }),
-      // transformResponse: (result) => result.data,
     }),
-
     verifyOTP: builder.mutation({
       query: ({ email, otpValue }) => ({
         url: "auth/verify-otp",
@@ -56,16 +25,12 @@ export const authApi = createApi({
         body: { email },
       }),
     }),
-
     signIn: builder.mutation({
       query: (credentials) => ({
         url: "/auth/signin",
         method: "POST",
         body: credentials,
       }),
-    }),
-    protected: builder.query({
-      query: () => "protected",
     }),
   }),
 });

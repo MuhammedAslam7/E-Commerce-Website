@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useSignInMutation } from "@/services/api/authApi";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setCredentials } from "@/redux/slices/authSlice";
+import { setUser } from "@/redux/slices/userSlice";
 export const LoginForm = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -52,15 +52,16 @@ export const LoginForm = () => {
     try {
       const response = await signIn(formData).unwrap();
       navigate("/user/home");
+      console.log("Hii");
       const user = response?.data?.user;
       const token = response?.data?.accessToken;
       console.log(user);
-      // console.log(token);
-      dispatch(setCredentials({ user }));
-      localStorage.setItem("token", token);
+      console.log(token);
+      dispatch(setUser({ user, token }));
+
       setErrors({});
     } catch (error) {
-      console.log(error);
+      // console.log(error);
       setErrors({ apiError: error?.data?.message });
     }
   };
@@ -86,7 +87,7 @@ export const LoginForm = () => {
             )} */}
 
               {errors.apiError && (
-                <span className="text-red-500 self-center">
+                <span className="text-red-500 self-center mt-1 text-lg font-semibold">
                   {errors.apiError}
                 </span>
               )}
