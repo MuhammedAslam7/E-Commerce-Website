@@ -52,12 +52,12 @@ export const LoginForm = () => {
     try {
       const response = await signIn(formData).unwrap();
       navigate("/user/home");
-      console.log("Hii");
       const user = response?.data?.user;
-      const token = response?.data?.accessToken;
-      console.log(user);
-      console.log(token);
-      dispatch(setUser({ user, token }));
+      const token = response?.accessToken;
+      console.log("user", user);
+      console.log("token", token);
+      dispatch(setUser({ user }));
+      localStorage.setItem("userToken", token);
 
       setErrors({});
     } catch (error) {

@@ -167,7 +167,7 @@ export const refreshToken = async (req, res) => {
     const decoded = await jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
     const accessToken = createAccessToken({ _id: decoded.userId });
     console.log(accessToken);
-    res.json(accessToken);
+    res.json({ accessToken });
   } catch (error) {
     res
       .status(403)

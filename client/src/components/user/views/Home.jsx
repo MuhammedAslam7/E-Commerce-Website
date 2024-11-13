@@ -5,7 +5,8 @@ import { ProductCard } from "../layouts/Product";
 import { useEffect } from "react";
 
 export default function Home() {
-  const { data, isLoading, error } = useUserHomeQuery();
+  useEffect(() => {});
+  const { data, isLoading, error, refetch } = useUserHomeQuery();
 
   console.log(data);
   return (
@@ -25,7 +26,10 @@ export default function Home() {
                 Get upto <span className="text-yellow-500">50%</span> off Today
                 Only
               </span>
-              <Button className="mt-6 w-fit bg-red-600 hover:bg-red-700">
+              <Button
+                className="mt-6 w-fit bg-red-600 hover:bg-red-700"
+                onClick={() => refetch()}
+              >
                 SHOP NOW
               </Button>
             </div>

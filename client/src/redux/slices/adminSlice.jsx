@@ -1,27 +1,29 @@
-// import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 
-// const adminSlice = createSlice({
-//   name: "admin",
-//   initialState: { adminId: null, email: null, role: null, accessToken: null },
+const initialState = {
+  adminId: null,
+  email: null,
+  role: null,
+};
 
-//   reducers: {
-//     setAdmin: (state, action) => {
-//       const { admin } = action.payload;
-//       const { token } = action.payload;
-//       state.adminId = admin.adminId;
-//       state.token = token;
-//       state.email = admin.email;
-//       state.role = admin.role;
-//     },
-//     logout: (state) => {
-//       state.adminId = null;
-//       state.token = null;
-//       state.email = null;
-//       state.role = null;
-//     },
-//   },
-// });
+const adminSlice = createSlice({
+  name: "admin",
+  initialState,
+  reducers: {
+    setAdmin: (state, action) => {
+      const { admin } = action.payload;
+      state.adminId = admin.adminId;
+      state.email = admin.email;
+      state.role = admin.role;
+    },
+    adminlogout: (state) => {
+      state.adminId = null;
+      state.email = null;
+      state.role = null;
+      localStorage.removeItem("adminToken");
+    },
+  },
+});
 
-// export const { setAdmin, logout } = adminSlice.actions;
-// export default adminSlice.reducer;
-// export const
+export const { setAdmin, adminlogout } = adminSlice.actions;
+export default adminSlice.reducer;
