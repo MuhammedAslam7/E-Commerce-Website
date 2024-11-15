@@ -15,7 +15,6 @@ export const addProduct = async (req, res) => {
       });
       imageUrls.push(result.secure_url);
 
-
       fs.unlinkSync(path.resolve(file.path));
     }
 
@@ -35,5 +34,16 @@ export const addProduct = async (req, res) => {
     res
       .status(500)
       .json({ message: "Failed to add product", error: error.message });
+  }
+};
+
+export const getAllProducts = async (req, res) => {
+  try {
+    console.log("Product");
+    const allProducts = await Product.find();
+
+    res.status(200).json(allProducts);
+  } catch (error) {
+    res.status(500).json({ message: "Error on sending Products" });
   }
 };

@@ -4,6 +4,7 @@ const initialState = {
   userId: null,
   email: null,
   role: null,
+  isAuthenticated: false,
 };
 
 const userSlice = createSlice({
@@ -16,12 +17,14 @@ const userSlice = createSlice({
       state.userId = user.userId;
       state.email = user.email;
       state.role = user.role;
+      state.isAuthenticated = true;
     },
 
     userlogOut: (state) => {
       state.userId = null;
       state.email = null;
       state.role = null;
+      state.isAuthenticated = false;
       localStorage.removeItem("userToken");
     },
   },

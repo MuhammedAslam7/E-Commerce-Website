@@ -3,9 +3,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   useVerifyOTPMutation,
   useResendOTPMutation,
-} from "@/services/api/authApi";
+} from "@/services/api/user/authApi";
 
-export const OTPForm = () => {
+export const OTPPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const email = location.state?.email;

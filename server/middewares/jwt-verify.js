@@ -16,6 +16,7 @@ export const verifyToken = (req, res, next) => {
       return res.status(401).json({ message: "Invalid access token" });
     } else {
       req.user = decoded;
+      console.log(decoded);
       next();
     }
   } catch (error) {
@@ -28,6 +29,7 @@ export const verifyRole = (roles) => (req, res, next) => {
     if (!roles.includes(req?.user?.role)) {
       return res.status(403).json({ message: "Request access denied" });
     }
+
     next();
   } catch (error) {
     return res.status(500).json({ message: error.message });

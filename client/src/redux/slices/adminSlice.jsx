@@ -4,6 +4,7 @@ const initialState = {
   adminId: null,
   email: null,
   role: null,
+  isAuthenticated: false,
 };
 
 const adminSlice = createSlice({
@@ -15,11 +16,13 @@ const adminSlice = createSlice({
       state.adminId = admin.adminId;
       state.email = admin.email;
       state.role = admin.role;
+      state.isAuthenticated = true;
     },
     adminlogout: (state) => {
       state.adminId = null;
       state.email = null;
       state.role = null;
+      state.isAuthenticated = false;
       localStorage.removeItem("adminToken");
     },
   },

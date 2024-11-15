@@ -165,8 +165,9 @@ export const refreshToken = async (req, res) => {
 
   try {
     const decoded = await jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
-    const accessToken = createAccessToken({ _id: decoded.userId });
-    console.log(accessToken);
+    const user = await User.findById(decoded.userId);
+    const accessToken = createAccessToken(user);
+
     res.json({ accessToken });
   } catch (error) {
     res
@@ -182,8 +183,10 @@ export const logout = (req, res) => {
 
 export const adminSignin = async (req, res) => {
   const { email, password } = req.body;
+
   try {
-    const admin = User.findOne({ email, role: "admin" });
+    console.log(email, password);
+    const admin = await User.findOne({ email, role: "admin" });
     if (!admin) {
       return res.status(404).json({ message: "This is not a valid admin" });
     }
@@ -214,5 +217,7 @@ export const adminSignin = async (req, res) => {
           admin: { adminId: admin._id, email: admin.email, role: admin.role },
         },
       });
-  } catch (error) {}
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
 };

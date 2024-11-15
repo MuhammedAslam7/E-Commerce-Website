@@ -1,15 +1,17 @@
-import { Search, ChevronDown } from "lucide-react";
+import { Search, ChevronDown, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
 import { FaUser, FaShoppingCart, FaHeart } from "react-icons/fa";
 
-export const Navbar = () => {
+export const NavbarUser = () => {
+  const handleLogout = async () => {};
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b shadow-sm">
       <div className="container mx-auto px-4 py-2">
@@ -85,12 +87,26 @@ export const Navbar = () => {
                 </span>
               </div>
             </button>
-            <button
-              className="flex flex-col items-center gap-1 hover:text-gray-600 transition-colors"
-              aria-label="User account"
-            >
-              <FaUser className="size-5" />
-            </button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <FaUser className="size-5" />
+                  <span className="sr-only">Open user menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem>
+                  <User className="mr-2 size-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 size-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>

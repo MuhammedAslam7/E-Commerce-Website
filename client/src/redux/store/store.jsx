@@ -1,17 +1,17 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { authApi } from "../../services/api/authApi";
+import { authApi } from "../../services/api/user/authApi";
 import userReducer from "../slices/userSlice";
-import { userApi } from "@/services/api/userApi";
+import { userApi } from "@/services/api/user/userApi";
 import adminReducer from "../slices/adminSlice";
-import { adminApi } from "@/services/api/adminApi";
-import storage from "redux-persist/lib/storage";
-import { persistStore, persistReducer } from "redux-persist";
+import { adminApi } from "@/services/api/admin/adminApi";
+import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
+import { persistReducer, persistStore } from "redux-persist";
 import { combineReducers } from "@reduxjs/toolkit";
 
 const persistConfig = {
   key: "root",
   storage,
-  whiteList: ["user", "admin"],
+  whitelist: ["user", "admin"], //persit user and admin
 };
 
 const rootReducer = combineReducers({
@@ -29,7 +29,8 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false })
       .concat(authApi.middleware)
-      .concat(userApi.middleware),
+      .concat(userApi.middleware)
+      .concat(adminApi.middleware),
 });
 
 export const persistor = persistStore(store);

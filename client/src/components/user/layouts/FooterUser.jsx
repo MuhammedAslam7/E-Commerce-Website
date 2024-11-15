@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-export const Footer = () => {
+export const FooterUser = () => {
   return (
     <footer className="bg-gray-900 py-12 text-white">
       <div className="container mx-auto px-4">

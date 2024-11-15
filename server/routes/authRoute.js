@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  adminSignin,
   refreshToken,
   resendOTP,
   signIn,
@@ -14,6 +15,6 @@ router.post("/verify-otp", verifyOTP);
 router.post("/resend-otp", resendOTP);
 router.post("/signin", signIn);
 router.get("/refresh-token", refreshToken);
-router.post("/admin/signin", refreshToken);
+router.post("/admin/signin", adminSignin);
 
 export default router;

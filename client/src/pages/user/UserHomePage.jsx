@@ -1,16 +1,23 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useUserHomeQuery } from "@/services/api/userApi";
-import { ProductCard } from "../layouts/Product";
-import { useEffect } from "react";
+import { useUserHomeQuery } from "@/services/api/user/userApi";
+import { ProductCard } from "@/components/user/layouts/ProductCard";
+import { NavbarUser } from "@/components/user/layouts/NavbarUser";
+import { SecondNavbarUser } from "@/components/user/layouts/SecondNavbarUser";
+import { FooterUser } from "@/components/user/layouts/FooterUser";
 
-export default function Home() {
-  useEffect(() => {});
-  const { data, isLoading, error, refetch } = useUserHomeQuery();
+export function UserHomePage() {
+  const { data, isLoading, error } = useUserHomeQuery();
+
+  const topCard = data?.slice(0, 5);
+  const downCard = data?.slice(5);
+  console.log(topCard);
 
   console.log(data);
   return (
     <div className="min-h-screen bg-gray-50">
+      <NavbarUser />
+      <SecondNavbarUser />
       <section className="relative">
         <img
           src="/banners/c-d-x-HwwQZZdQHtc-unsplash.jpg"
@@ -26,10 +33,7 @@ export default function Home() {
                 Get upto <span className="text-yellow-500">50%</span> off Today
                 Only
               </span>
-              <Button
-                className="mt-6 w-fit bg-red-600 hover:bg-red-700"
-                onClick={() => refetch()}
-              >
+              <Button className="mt-6 w-fit bg-red-600 hover:bg-red-700">
                 SHOP NOW
               </Button>
             </div>
@@ -56,8 +60,15 @@ export default function Home() {
             Super Saver
           </h2>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <ProductCard key={i} title="Wireless Headphones" price="99.99" />
+            {topCard?.map((product) => (
+              <ProductCard
+                key={product._id}
+                name={product.name}
+                description={product.description}
+                price={product.price}
+                thumbnailImage={product.thumbnailImage}
+                // images={product.images}
+              />
             ))}
           </div>
         </div>
@@ -90,6 +101,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <FooterUser />
     </div>
   );
 }

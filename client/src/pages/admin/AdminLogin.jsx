@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useSignInMutation } from "@/services/api/authApi";
+import { useAdminSignInMutation } from "@/services/api/user/authApi";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-// import { setCredentials } from "@/redux/slices/userSlice";
-export const LoginForm = () => {
+import { setAdmin } from "@/redux/slices/adminSlice";
+
+export const AdminLogin = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -13,7 +14,7 @@ export const LoginForm = () => {
     password: "",
   });
   const [errors, setErrors] = useState({});
-  const [signIn, { isLoading }] = useSignInMutation();
+  const [adminSignIn, { isLoading }] = useAdminSignInMutation();
 
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
@@ -50,6 +51,12 @@ export const LoginForm = () => {
       return;
     }
     try {
+      const response = await adminSignIn(formData).unwrap();
+      navigate("/admin/dashboard");
+      const admin = response?.data?.admin;
+      const token = response?.accessToken;
+      dispatch(setAdmin({ admin }));
+      localStorage.setItem("adminToken", token);
       setErrors({});
     } catch (error) {
       console.log(error);

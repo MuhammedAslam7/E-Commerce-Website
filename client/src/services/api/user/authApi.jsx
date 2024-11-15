@@ -1,5 +1,5 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
-import { baseQueryWithReauth } from "./baseApi";
+import { baseQueryWithReauth } from "./baseQueryUser";
 
 export const authApi = createApi({
   baseQuery: baseQueryWithReauth,
@@ -32,6 +32,13 @@ export const authApi = createApi({
         body: credentials,
       }),
     }),
+    adminSignIn: builder.mutation({
+      query: (credentials) => ({
+        url: "/auth/admin/signin",
+        method: "POST",
+        body: credentials,
+      }),
+    }),
   }),
 });
 
@@ -40,5 +47,5 @@ export const {
   useVerifyOTPMutation,
   useResendOTPMutation,
   useSignInMutation,
-  useProtectedQuery,
+  useAdminSignInMutation,
 } = authApi;

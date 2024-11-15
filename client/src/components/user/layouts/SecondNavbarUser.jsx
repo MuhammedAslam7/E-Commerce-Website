@@ -9,7 +9,7 @@ const navItems = [
   { name: "Contact Us", href: "/contact" },
 ];
 
-export const SecondNavbar = () => {
+export const SecondNavbarUser = () => {
   return (
     <nav className="bg-black py-3 h-[75px] mt-20 flex items-center">
       <div className="container mx-auto px-4">
