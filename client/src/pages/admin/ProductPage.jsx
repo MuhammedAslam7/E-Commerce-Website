@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Edit, EyeOff, Eye, AlertTriangle } from "lucide-react";
+import { Plus, Edit, AlertTriangle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -30,11 +30,14 @@ import {
   useGetAllProductsQuery,
   useUpdateProductStatusMutation,
 } from "@/services/api/admin/adminApi";
+import { useNavigate } from "react-router-dom";
 
 export function ProductPage() {
-  const toast = useToast();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const { data: products = [], isLoading, error } = useGetAllProductsQuery();
+
   const [showModal, setShowModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [updateProductStatus, { isLoading: isUpdating }] =
@@ -55,6 +58,7 @@ export function ProductPage() {
           id: selectedProduct._id,
           listed: !selectedProduct.listed,
         }).unwrap();
+
         toast({
           title: "Success",
           Description: `Product ${
@@ -64,6 +68,7 @@ export function ProductPage() {
         });
       } catch (error) {
         console.error("Failed to update product status:", error);
+
         toast({
           title: "Error",
           description: "Failed to update product status. Please try again.",
@@ -71,9 +76,11 @@ export function ProductPage() {
         });
       }
     }
+
     setShowModal(false);
     setSelectedProduct(null);
   };
+
   const cancelToggle = () => {
     setShowModal(false);
     setSelectedProduct(null);
@@ -85,6 +92,7 @@ export function ProductPage() {
         Loading...
       </div>
     );
+
   if (error)
     return (
       <div className="flex items-center justify-center h-screen">
@@ -106,7 +114,10 @@ export function ProductPage() {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Product Management
             </h1>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button
+              onClick={() => navigate("/admin/products/add-products")}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
               <Plus className="mr-2 h-4 w-4" /> Add Product
             </Button>
           </div>
@@ -132,16 +143,16 @@ export function ProductPage() {
                 </TableHeader>
                 <TableBody>
                   {products.map((product) => (
-                    <TableRow key={product.id}>
+                    <TableRow key={product._id}>
                       <TableCell>
                         <img
-                          src={product.image}
+                          src={product.thumbnailImage}
                           alt={product.name}
                           className="w-12 h-12 object-cover rounded-md"
                         />
                       </TableCell>
                       <TableCell className="font-medium">
-                        {product.name}
+                        {product.productName}
                       </TableCell>
                       <TableCell>{product.category}</TableCell>
                       <TableCell>{product.brand}</TableCell>
@@ -150,7 +161,7 @@ export function ProductPage() {
                       <TableCell>
                         <Badge
                           variant={product.listed ? "success" : "secondary"}
-                          className="font-semibold"
+                          className="font-semibold bh"
                         >
                           {product.listed ? "Listed" : "Unlisted"}
                         </Badge>

@@ -31,7 +31,7 @@ export function SidebarAdmin() {
           <div className="flex items-center gap-2">
             <Package className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             <h1 className="text-lg font-bold text-gray-800 dark:text-white">
-              E-COMMERCE PRO
+              DUNE AUDIO
             </h1>
           </div>
         </div>

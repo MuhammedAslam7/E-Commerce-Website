@@ -4,6 +4,7 @@ import { baseQueryWithReauth } from "./AdminBaseQuery";
 export const adminApi = createApi({
   reducerPath: "adminApi",
   baseQuery: baseQueryWithReauth,
+  tagTypes: ["Product"],
   endpoints: (builder) => ({
     addProducts: builder.mutation({
       query: (formData) => ({
@@ -11,20 +12,22 @@ export const adminApi = createApi({
         method: "POST",
         body: formData,
       }),
+      invalidatesTags: ["Product"],
     }),
     getAllProducts: builder.query({
       query: () => ({
-        url: "admin/all-products",
+        url: "admin/products/all-products",
         method: "GET",
-        providesTags: ["product"],
       }),
+      providesTags: ["Product"],
     }),
     updateProductStatus: builder.mutation({
-      query: ({ id }) => ({
+      query: ({ id, listed }) => ({
         url: `admin/products/update-status/${id}`,
         method: "PATCH",
+        body: { listed },
       }),
-      invalidatesTags: ["product"],
+      invalidatesTags: ["Product"], // Invalidate the "Product" tag
     }),
   }),
 });

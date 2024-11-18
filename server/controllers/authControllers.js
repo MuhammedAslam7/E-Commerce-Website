@@ -24,7 +24,7 @@ export const signup = async (req, res) => {
 
     const hashedPassword = await bcryptjs.hash(password, 10);
 
-    const tempUser = new TempUser({
+    await TempUser.create({
       username,
       email,
       phone,
@@ -32,7 +32,6 @@ export const signup = async (req, res) => {
       otp,
       otpExpires,
     });
-    await tempUser.save();
     //sending otp
     await sendOTPEmail(email, otp);
 
