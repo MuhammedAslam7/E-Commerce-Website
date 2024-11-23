@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAdminSignInMutation } from "@/services/api/user/authApi";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setAdmin } from "@/redux/slices/adminSlice";
+import { setAdmin } from "@/redux/slices/AdminSlice";
 
 export const AdminLogin = () => {
   const navigate = useNavigate();
@@ -52,7 +52,7 @@ export const AdminLogin = () => {
     }
     try {
       const response = await adminSignIn(formData).unwrap();
-      navigate("/admin/dashboard");
+      navigate("/admin/products");
       const admin = response?.data?.admin;
       const token = response?.accessToken;
       dispatch(setAdmin({ admin }));

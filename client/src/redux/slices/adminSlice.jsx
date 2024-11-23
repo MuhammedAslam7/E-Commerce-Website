@@ -18,7 +18,7 @@ const adminSlice = createSlice({
       state.role = admin.role;
       state.isAuthenticated = true;
     },
-    adminlogout: (state) => {
+    adminLogout: (state) => {
       state.adminId = null;
       state.email = null;
       state.role = null;
@@ -28,5 +28,5 @@ const adminSlice = createSlice({
   },
 });
 
-export const { setAdmin, adminlogout } = adminSlice.actions;
+export const { setAdmin, adminLogout } = adminSlice.actions;
 export default adminSlice.reducer;

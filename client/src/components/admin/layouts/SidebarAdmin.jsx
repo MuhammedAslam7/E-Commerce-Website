@@ -11,11 +11,15 @@ import {
   Star,
   Package,
   FileText,
+  Grid,
+  Tag,
 } from "lucide-react";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
   { icon: ShoppingBag, label: "Products", href: "/admin/products" },
+  { icon: Grid, label: "Categories", href: "/admin/category" },
+  { icon: Tag, label: "Brands", href: "#" },
   { icon: Users, label: "Customers", href: "#" },
   { icon: ShoppingCart, label: "Orders", href: "#" },
   { icon: Truck, label: "Shipping", href: "#" },
@@ -40,9 +44,9 @@ export function SidebarAdmin() {
             <Link
               key={item.label}
               to={item.href}
-              className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg mb-1 transition-all duration-200 group"
+              className="flex items-center gap-3 px-4 py-4 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg mb-2 transition-all duration-200 group hover:scale-105"
             >
-              <item.icon className="h-5 w-5 text-gray-500 group-hover:text-blue-600 dark:text-gray-400 dark:group-hover:text-blue-400 transition-colors duration-200" />
+              <item.icon className="h-6 w-6 text-gray-500 group-hover:text-blue-600 dark:text-gray-400 dark:group-hover:text-blue-400 transition-colors duration-200" />
               <span className="text-sm font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
                 {item.label}
               </span>

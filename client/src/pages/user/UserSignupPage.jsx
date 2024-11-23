@@ -348,7 +348,7 @@ export const UserSignupPage = () => {
             <p className="text-gray-800 text-sm mt-3 text-center">
               Already have an account?{" "}
               <Link
-                href="javascript:void(0);"
+                to="/sign-in"
                 className="text-blue-600 font-semibold hover:underline ml-1"
               >
                 Login here

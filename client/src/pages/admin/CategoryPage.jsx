@@ -32,7 +32,7 @@ import {
 } from "@/services/api/admin/adminApi";
 import { useNavigate } from "react-router-dom";
 
-export function ProductPage() {
+export function CategoryPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -115,25 +115,21 @@ export function ProductPage() {
               onClick={() => navigate("/admin/products/add-products")}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
-              <Plus className="mr-2 h-4 w-4" /> Add Product
+              <Plus className="mr-2 h-4 w-4" /> Add Categories
             </Button>
           </div>
           <Card className="shadow-lg">
             <CardHeader className="bg-gray-50 dark:bg-gray-800">
               <CardTitle className="text-xl text-gray-800 dark:text-gray-200">
-                Product List
+                Category List
               </CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[100px]">Image</TableHead>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Brand</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Stock</TableHead>
+                    <TableHead>Categories</TableHead>
+
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>

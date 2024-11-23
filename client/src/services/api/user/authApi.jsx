@@ -39,6 +39,33 @@ export const authApi = createApi({
         body: credentials,
       }),
     }),
+    adminlogout: builder.mutation({
+      query: () => ({
+        url: "/auth/admin/logout",
+        method: "POST",
+      }),
+    }),
+    resetPassword: builder.mutation({
+      query: (formData) => ({
+        url: "/auth/reset-password",
+        method: "POST",
+        body: formData,
+      }),
+    }),
+    resetVerifyOTp: builder.mutation({
+      query: ({ email, otpValue }) => ({
+        url: "/auth/reset-verify-otp",
+        method: "POST",
+        body: { email, otpValue },
+      }),
+    }),
+    confirmResetPassword: builder.mutation({
+      query: ({ newPassword, email }) => ({
+        url: "auth/confirm-reset-password",
+        method: "POST",
+        body: { newPassword, email },
+      }),
+    }),
   }),
 });
 
@@ -48,4 +75,8 @@ export const {
   useResendOTPMutation,
   useSignInMutation,
   useAdminSignInMutation,
+  useAdminlogoutMutation,
+  useResetPasswordMutation,
+  useResetVerifyOTpMutation,
+  useConfirmResetPasswordMutation,
 } = authApi;

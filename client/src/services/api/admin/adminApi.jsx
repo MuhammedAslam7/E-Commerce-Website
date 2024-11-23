@@ -27,7 +27,21 @@ export const adminApi = createApi({
         method: "PATCH",
         body: { listed },
       }),
-      invalidatesTags: ["Product"], // Invalidate the "Product" tag
+      invalidatesTags: ["Product"],
+    }),
+    getProductById: builder.query({
+      query: (id) => ({
+        url: `admin/products/get-product/${id}`,
+        method: "GET",
+      }),
+      providesTags: (result, error, id) => [{ type: "Product", id }],
+    }),
+    updateProductById: builder.mutation({
+      query: ({ id, productData }) => ({
+        url: `admin/products/edit-product/${id}`,
+        method: "PUT",
+        body: productData,
+      }),
     }),
   }),
 });
@@ -36,4 +50,6 @@ export const {
   useGetAllProductsQuery,
   useUpdateProductStatusMutation,
   useAddProductsMutation,
+  useGetProductByIdQuery,
+  useUpdateProductByIdMutation,
 } = adminApi;

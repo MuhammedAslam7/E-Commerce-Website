@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { SidebarAdmin } from "@/components/admin/layouts/SidebarAdmin";
 import { NavbarAdmin } from "@/components/admin/layouts/NavbarAdmin";
 import { Button } from "@/components/ui/button";
@@ -8,15 +9,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { X, Upload } from "lucide-react";
-import { useAddProductsMutation } from "@/services/api/admin/adminApi";
+import {
+  useGetProductByIdQuery,
+  useUpdateProductByIdMutation,
+} from "@/services/api/admin/adminApi";
 import {
   Dialog,
   DialogContent,
@@ -29,30 +26,69 @@ import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { ImageCropModal } from "@/components/admin/modals/ImageCropModal";
 
-export function ProductAddPage() {
+export function ProductEditPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [images, setImages] = useState([]);
-  const [addProducts, { isLoading }] = useAddProductsMutation();
+  const { data: product, isLoading, error } = useGetProductByIdQuery(id);
+
+  const [updateProduct, { isLoading: isUpdating }] =
+    useUpdateProductByIdMutation();
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(null);
   const [formData, setFormData] = useState({
     productName: "",
-    brand: "",
-    price: "",
-    stock: "",
     description: "",
+    price: "",
+    totalStock: "",
     category: "",
     color: "",
   });
+
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
 
   useEffect(() => {
-    return () => images.forEach((image) => URL.revokeObjectURL(image.preview));
+    if (product) {
+      setFormData({
+        productName: product.productName || "",
+        description: product.description || "",
+        price: product.price?.toString() || "",
+        totalStock: product.totalStock?.toString() || "",
+        category: product.category || "", // Added category
+        color: product.variants?.[0]?.color || "",
+      });
+
+      if (
+        product.variants &&
+        product.variants[0] &&
+        Array.isArray(product.variants[0].images)
+      ) {
+        setImages(
+          product.variants[0].images.map((url) => ({
+            preview: url,
+            file: null, // We don't have the file object for existing images
+          }))
+        );
+      } else {
+        setImages([]);
+      }
+    }
+  }, [product]);
+
+  useEffect(() => {
+    return () => {
+      images.forEach((image) => {
+        if (image.preview && image.file) {
+          URL.revokeObjectURL(image.preview);
+        }
+      });
+    };
   }, [images]);
 
   const handleImageUpload = useCallback((files) => {
@@ -100,35 +136,52 @@ export function ProductAddPage() {
     for (const key in formData) {
       productData.append(key, formData[key]);
     }
-    images.forEach((image) => {
-      productData.append("images", image.file);
-    });
+
+    // Append existing images that don't have a file object
+    const existingImages = images
+      .filter((image) => !image.file)
+      .map((image) => image.preview);
+    productData.append("existingImages", JSON.stringify(existingImages));
+
+    // Append new images
+    images
+      .filter((image) => image.file)
+      .forEach((image) => {
+        productData.append(`images`, image.file);
+      });
 
     try {
-      await addProducts(productData).unwrap();
+      await updateProduct({ id, productData }).unwrap();
       toast({
         title: "Success",
-        description: "Product added successfully!",
+        description: "Product updated successfully!",
       });
-      setFormData({
-        productName: "",
-        brand: "",
-        price: "",
-        stock: "",
-        description: "",
-        category: "",
-        color: "",
-      });
-      setImages([]);
+      navigate("/admin/products");
     } catch (error) {
-      console.log({ error: error.message });
+      console.error("Failed to update product:", error);
       toast({
         title: "Error",
-        description: "Failed to add product. Please try again.",
+        description: "Failed to update product. Please try again.",
         variant: "destructive",
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        Loading...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        Error: {error.message}
+      </div>
+    );
+  }
 
   return (
     <div className={`flex h-screen ${isDarkMode ? "dark" : ""}`}>
@@ -137,15 +190,15 @@ export function ProductAddPage() {
         <NavbarAdmin
           isDarkMode={isDarkMode}
           setIsDarkMode={setIsDarkMode}
-          pageName="ADD PRODUCT"
+          pageName="EDIT PRODUCT"
         />
-        <div className="flex-1 overflow-auto p-4 ">
-          <Card className="w-full max-w-7xl mx-auto h-full">
-            <CardContent className="p-4 h-full flex flex-col">
-              <form onSubmit={handleSubmit} className="space-y-6 flex-grow">
-                <div className="grid grid-cols-3 gap-4 h-full">
-                  <div className="col-span-2 space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
+        <div className="flex-1 overflow-auto p-6">
+          <Card className="w-full h-full">
+            <CardContent className="p-6">
+              <form onSubmit={handleSubmit} className="h-full flex flex-col">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow">
+                  <div className="lg:col-span-2 space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label
                           htmlFor="productName"
@@ -163,22 +216,6 @@ export function ProductAddPage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="brand" className="text-sm font-medium">
-                          Brand
-                        </Label>
-                        <Input
-                          id="brand"
-                          name="brand"
-                          value={formData.brand}
-                          onChange={handleInputChange}
-                          placeholder="Enter brand name"
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
                         <Label htmlFor="price" className="text-sm font-medium">
                           Price
                         </Label>
@@ -192,17 +229,36 @@ export function ProductAddPage() {
                           className="mt-1"
                         />
                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="stock" className="text-sm font-medium">
-                          Stock
+                        <Label
+                          htmlFor="totalStock"
+                          className="text-sm font-medium"
+                        >
+                          Total Stock
                         </Label>
                         <Input
-                          id="stock"
+                          id="totalStock"
                           type="number"
-                          name="stock"
-                          value={formData.stock}
+                          name="totalStock"
+                          value={formData.totalStock}
                           onChange={handleInputChange}
-                          placeholder="Enter stock quantity"
+                          placeholder="Enter total stock"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="color" className="text-sm font-medium">
+                          Color
+                        </Label>
+                        <Input
+                          id="color"
+                          name="color"
+                          value={formData.color}
+                          onChange={handleInputChange}
+                          placeholder="Enter color"
                           className="mt-1"
                         />
                       </div>
@@ -221,64 +277,27 @@ export function ProductAddPage() {
                         value={formData.description}
                         onChange={handleInputChange}
                         placeholder="Enter product description"
-                        rows={3}
+                        rows={5}
                         className="mt-1"
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label
-                          htmlFor="category"
-                          className="text-sm font-medium"
-                        >
-                          Category
-                        </Label>
-                        <Select
-                          value={formData.category}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, category: value })
-                          }
-                        >
-                          <SelectTrigger id="category" className="mt-1">
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="head-phones">
-                              Head phones
-                            </SelectItem>
-                            <SelectItem value="neck-band">Neck Band</SelectItem>
-                            <SelectItem value="ear-buds">Ear Buds</SelectItem>
-                            <SelectItem value="speakers">Speakers</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="color" className="text-sm font-medium">
-                          Color
-                        </Label>
-                        <Select
-                          value={formData.color}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, color: value })
-                          }
-                        >
-                          <SelectTrigger id="color" className="mt-1">
-                            <SelectValue placeholder="Select color" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="black">Black</SelectItem>
-                            <SelectItem value="white">White</SelectItem>
-                            <SelectItem value="red">Red</SelectItem>
-                            <SelectItem value="blue">Blue</SelectItem>
-                            <SelectItem value="green">Green</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                    <div>
+                      <Label htmlFor="category" className="text-sm font-medium">
+                        Category
+                      </Label>
+                      <Input
+                        id="category"
+                        name="category"
+                        value={formData.category}
+                        onChange={handleInputChange}
+                        placeholder="Enter category"
+                        className="mt-1"
+                      />
                     </div>
                   </div>
 
-                  <div className="col-span-1 space-y-6">
+                  <div className="space-y-6">
                     <div>
                       <Label htmlFor="images" className="text-sm font-medium">
                         Product Images
@@ -305,19 +324,19 @@ export function ProductAddPage() {
                     </div>
 
                     {images.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                         {images.map((image, index) => (
                           <div key={index} className="relative group">
                             <img
                               src={image.preview}
                               alt={`Product image ${index + 1}`}
-                              className="cursor-pointer h-16 w-16 object-cover rounded-md"
+                              className="cursor-pointer w-full h-24 object-cover rounded-md"
                               onClick={() => openCropModal(image, index)}
                             />
                             <button
                               type="button"
                               onClick={() => removeImage(index)}
-                              className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                               <X className="h-3 w-3" />
                             </button>
@@ -325,15 +344,23 @@ export function ProductAddPage() {
                         ))}
                       </div>
                     )}
-
-                    <Button
-                      type="submit"
-                      className="w-full text-sm font-medium py-2 mt-4"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? "Adding Product" : "Add Product"}
-                    </Button>
                   </div>
+                </div>
+                <div className="mt-6 flex justify-end space-x-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate("/admin/products")}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? "Updating Product..." : "Update Product"}
+                  </Button>
                 </div>
               </form>
             </CardContent>
@@ -344,9 +371,9 @@ export function ProductAddPage() {
       <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Product Addition</DialogTitle>
+            <DialogTitle>Confirm Product Update</DialogTitle>
             <DialogDescription>
-              Are you sure you want to add this product?
+              Are you sure you want to update this product?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

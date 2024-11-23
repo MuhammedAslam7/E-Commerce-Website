@@ -176,7 +176,10 @@ export const UserLoginPage = () => {
                   </span>
                 )}
               </div>
-              <span className="self-end text-xs font-medium">
+              <span
+                className="self-end text-xs font-medium cursor-pointer"
+                onClick={() => navigate("/reset-password")}
+              >
                 Forgot Password?
               </span>
             </div>
@@ -240,7 +243,7 @@ export const UserLoginPage = () => {
             <p className="text-gray-800 text-sm mt-3 text-center">
               Dont have an account?{" "}
               <Link
-                href="javascript:void(0);"
+                to="/sign-up"
                 className="text-blue-600 font-semibold hover:underline ml-1"
               >
                 Create Account

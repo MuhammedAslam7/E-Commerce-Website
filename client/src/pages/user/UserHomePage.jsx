@@ -9,8 +9,8 @@ import { FooterUser } from "@/components/user/layouts/FooterUser";
 export function UserHomePage() {
   const { data, isLoading, error } = useUserHomeQuery();
 
-  const topCard = data?.slice(0, 5);
-  const downCard = data?.slice(5);
+  const topCard = data?.slice(0, 4);
+  const downCard = data?.slice(7);
   console.log(topCard);
 
   console.log(data);
@@ -63,7 +63,7 @@ export function UserHomePage() {
             {topCard?.map((product) => (
               <ProductCard
                 key={product._id}
-                name={product.name}
+                productName={product.productName}
                 description={product.description}
                 price={product.price}
                 thumbnailImage={product.thumbnailImage}

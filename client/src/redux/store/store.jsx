@@ -2,7 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { authApi } from "../../services/api/user/authApi";
 import userReducer from "../slices/userSlice";
 import { userApi } from "@/services/api/user/userApi";
-import adminReducer from "../slices/adminSlice";
+import adminReducer from "../slices/AdminSlice";
 import { adminApi } from "@/services/api/admin/adminApi";
 import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
 import { persistReducer, persistStore } from "redux-persist";
