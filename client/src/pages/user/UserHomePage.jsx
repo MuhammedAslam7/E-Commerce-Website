@@ -10,8 +10,9 @@ export function UserHomePage() {
   const { data, isLoading, error } = useUserHomeQuery();
 
   const topCard = data?.slice(0, 4);
-  const downCard = data?.slice(7);
+  const downCard = data?.slice(4);
   console.log(topCard);
+  console.log(downCard);
 
   console.log(data);
   return (
@@ -62,11 +63,12 @@ export function UserHomePage() {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {topCard?.map((product) => (
               <ProductCard
-                key={product._id}
-                productName={product.productName}
-                description={product.description}
-                price={product.price}
-                thumbnailImage={product.thumbnailImage}
+                key={product?._id}
+                productId={product?._id}
+                productName={product?.productName}
+                description={product?.description}
+                price={product?.price}
+                thumbnailImage={product?.thumbnailImage}
                 // images={product.images}
               />
             ))}
@@ -75,16 +77,25 @@ export function UserHomePage() {
       </section>
 
       {/* New Accessories Section */}
-      <section className="bg-gray-900 py-12 text-white">
-        <div className="container mx-auto px-4">
-          <h2 className="mb-8 text-center text-3xl font-bold">
-            TOP DEAL NEW ACCESSORIES
+      <section className="relative">
+        <img
+          src="/banners/hakii-official-9Fu5O1sR4mc-unsplash.jpg"
+          alt="Hero headphones"
+          className="h-[575px] w-full object-cover"
+        />
+        <div className="absolute top-20 left-1/2 transform -translate-x-1/2 flex flex-col items-center space-y-4">
+          <Button className="bg-blue-600 px-6 py-2 text-white rounded">
+            NEW ARRIVAL
+          </Button>
+          <h2 className="text-center text-3xl font-bold text-white">
+            TOP DEAL
           </h2>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <ProductCard key={i} title="Premium Earbuds" price="149.99" />
-            ))}
-          </div>
+          <h2 className="text-center text-3xl font-bold text-white">
+            NEW ACCESSORIES
+          </h2>
+          <Button className="px-6 py-3 bg-yellow-500 text-black font-bold rounded">
+            SHOP NOW
+          </Button>
         </div>
       </section>
 
@@ -95,8 +106,16 @@ export function UserHomePage() {
             Listen to the Noise
           </h2>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <ProductCard key={i} title="Pro Gaming Headset" price="199.99" />
+            {downCard?.map((product) => (
+              <ProductCard
+                key={product?._id}
+                productId={product?._id}
+                productName={product?.productName}
+                description={product.description}
+                price={product?.price}
+                thumbnailImage={product?.thumbnailImage}
+                // images={product.images}
+              />
             ))}
           </div>
         </div>

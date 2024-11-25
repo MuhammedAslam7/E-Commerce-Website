@@ -4,6 +4,7 @@ import { useSignInMutation } from "@/services/api/user/authApi";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/redux/slices/userSlice";
+import { useGoogleAuth } from "@/utils/GoogleAuth";
 export const UserLoginPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -51,7 +52,7 @@ export const UserLoginPage = () => {
     }
     try {
       const response = await signIn(formData).unwrap();
-      navigate("/user/home");
+      navigate("/home");
       const user = response?.data?.user;
       const token = response?.accessToken;
       dispatch(setUser({ user }));
@@ -63,6 +64,8 @@ export const UserLoginPage = () => {
       setErrors({ apiError: error?.data?.message });
     }
   };
+
+  const { handleGoogleClick } = useGoogleAuth();
 
   return (
     <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center p-4">
@@ -195,6 +198,7 @@ export const UserLoginPage = () => {
 
             <div className="mt-3">
               <button
+                onClick={handleGoogleClick}
                 type="button"
                 className="w-full px-4 py-2 flex items-center justify-center rounded-md text-gray-800 text-sm font-semibold border-none outline-none bg-gray-100 hover:bg-gray-200"
               >
@@ -236,7 +240,7 @@ export const UserLoginPage = () => {
                     data-original="#eb4132"
                   />
                 </svg>
-                Continue with Google
+                Sign in with Google
               </button>
             </div>
 

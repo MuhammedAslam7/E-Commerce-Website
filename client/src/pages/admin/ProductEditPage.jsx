@@ -33,6 +33,7 @@ export function ProductEditPage() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [images, setImages] = useState([]);
   const { data: product, isLoading, error } = useGetProductByIdQuery(id);
+  console.log(product);
 
   const [updateProduct, { isLoading: isUpdating }] =
     useUpdateProductByIdMutation();

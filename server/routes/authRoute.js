@@ -3,6 +3,7 @@ import {
   adminLogout,
   adminSignin,
   confirmPasswordReset,
+  googleAuth,
   refreshToken,
   resendOTP,
   resetPassword,
@@ -22,6 +23,7 @@ router.get("/refresh-token", refreshToken);
 router.post("/reset-password", resetPassword);
 router.post("/reset-verify-otp", resetVerifyOTP);
 router.post("/confirm-reset-password", confirmPasswordReset);
+router.post("/google-auth", googleAuth);
 
 //admin
 router.post("/admin/signin", adminSignin);

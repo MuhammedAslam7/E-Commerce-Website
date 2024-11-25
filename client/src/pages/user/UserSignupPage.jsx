@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 import { useSignUpMutation } from "@/services/api/user/authApi";
+import { useGoogleAuth } from "@/utils/GoogleAuth";
 
 export const UserSignupPage = () => {
   const navigate = useNavigate();
@@ -89,6 +90,9 @@ export const UserSignupPage = () => {
       }
     }
   };
+
+  // Google Oauth
+  const { handleGoogleClick } = useGoogleAuth();
 
   return (
     <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center p-4">
@@ -300,6 +304,7 @@ export const UserSignupPage = () => {
 
             <div className="mt-3">
               <button
+                onClick={handleGoogleClick}
                 type="button"
                 className="w-full px-4 py-2 flex items-center justify-center rounded-md text-gray-800 text-sm font-semibold border-none outline-none bg-gray-100 hover:bg-gray-200"
               >

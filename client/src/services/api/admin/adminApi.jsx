@@ -4,7 +4,7 @@ import { baseQueryWithReauth } from "./AdminBaseQuery";
 export const adminApi = createApi({
   reducerPath: "adminApi",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["Product"],
+  tagTypes: ["Product", "Category", "Users", "Brand"],
   endpoints: (builder) => ({
     addProducts: builder.mutation({
       query: (formData) => ({
@@ -43,6 +43,67 @@ export const adminApi = createApi({
         body: productData,
       }),
     }),
+    addCategories: builder.mutation({
+      query: ({ name, description }) => ({
+        url: "admin/category/add-category",
+        method: "POST",
+        body: { name, description },
+      }),
+      invalidatesTags: ["Category"],
+    }),
+    getAllCategories: builder.query({
+      query: () => ({
+        url: "admin/category/all-categories",
+        method: "GET",
+      }),
+      providesTags: ["Category"],
+    }),
+    updateCategoryStatus: builder.mutation({
+      query: ({ id, listed }) => ({
+        url: `admin/category/update-status/${id}`,
+        method: "PATCH",
+        body: { listed },
+      }),
+      invalidatesTags: ["Category"],
+    }),
+    getAllUsers: builder.query({
+      query: () => ({
+        url: "admin/users/all-users",
+        method: "GET",
+      }),
+      providesTags: ["Users"],
+    }),
+    updateUserStatus: builder.mutation({
+      query: ({ id, active }) => ({
+        url: `admin/users/update-status/${id}`,
+        method: "PATCH",
+        body: { active },
+      }),
+      invalidatesTags: ["Users"],
+    }),
+    addBrands: builder.mutation({
+      query: ({ name, description }) => ({
+        url: "admin/brands/add-brand",
+        method: "POST",
+        body: { name, description },
+      }),
+      invalidatesTags: ["Brand"],
+    }),
+    getAllBrands: builder.query({
+      query: () => ({
+        url: "admin/brands/all-brands",
+        method: "GET",
+      }),
+      providesTags: ["Brands"],
+    }),
+    updateBrandStatus: builder.mutation({
+      query: ({ id, listed }) => ({
+        url: `admin/brands/update-status/${id}`,
+        method: "PATCH",
+        body: { listed },
+      }),
+      invalidatesTags: ["Brands"],
+    }),
   }),
 });
 
@@ -52,4 +113,12 @@ export const {
   useAddProductsMutation,
   useGetProductByIdQuery,
   useUpdateProductByIdMutation,
+  useAddCategoriesMutation,
+  useGetAllCategoriesQuery,
+  useUpdateCategoryStatusMutation,
+  useGetAllUsersQuery,
+  useUpdateUserStatusMutation,
+  useAddBrandsMutation,
+  useGetAllBrandsQuery,
+  useUpdateBrandStatusMutation,
 } = adminApi;

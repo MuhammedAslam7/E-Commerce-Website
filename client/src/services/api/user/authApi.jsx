@@ -66,6 +66,13 @@ export const authApi = createApi({
         body: { newPassword, email },
       }),
     }),
+    signWithGoogleAuth: builder.mutation({
+      query: ({ username, email }) => ({
+        url: "auth/google-auth",
+        method: "POST",
+        body: { username, email },
+      }),
+    }),
   }),
 });
 
@@ -79,4 +86,5 @@ export const {
   useResetPasswordMutation,
   useResetVerifyOTpMutation,
   useConfirmResetPasswordMutation,
+  useSignWithGoogleAuthMutation,
 } = authApi;

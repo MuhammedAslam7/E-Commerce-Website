@@ -13,77 +13,76 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Edit, AlertTriangle } from "lucide-react";
+import { Plus, Edit } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+
 import { useToast } from "@/hooks/use-toast";
 // Importing the API hook
 import {
-  useGetAllProductsQuery,
-  useUpdateProductStatusMutation,
+  useGetAllCategoriesQuery,
+  useUpdateCategoryStatusMutation,
 } from "@/services/api/admin/adminApi";
 import { useNavigate } from "react-router-dom";
+import { ConfirmDialog } from "@/components/admin/modals/ConfirmDilalog";
 
 export function CategoryPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const { data: products = [], isLoading, error } = useGetAllProductsQuery();
+  const {
+    data: categories = [],
+    isLoading,
+    error,
+  } = useGetAllCategoriesQuery();
+
+  console.log(categories);
 
   const [showModal, setShowModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [updateProductStatus, { isLoading: isUpdating }] =
-    useUpdateProductStatusMutation();
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [updateCategoryStatus] = useUpdateCategoryStatusMutation();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
 
-  const handleToggleClick = (product) => {
-    setSelectedProduct(product);
+  const handleToggleClick = (category) => {
+    setSelectedCategory(category);
     setShowModal(true);
   };
-  const confirmToggleProduct = async () => {
-    if (selectedProduct) {
+  const confirmToggleCategory = async () => {
+    if (selectedCategory) {
       try {
-        await updateProductStatus({
-          id: selectedProduct._id,
-          listed: !selectedProduct.listed,
+        await updateCategoryStatus({
+          id: selectedCategory?._id,
+          listed: !selectedCategory?.listed,
         }).unwrap();
 
         toast({
           title: "Success",
-          Description: `Product ${
-            selectedProduct.listed ? "unlisted" : "listed"
+          Description: `Category ${
+            selectedCategory?.listed ? "unlisted" : "listed"
           } successfully.`,
           variant: "default",
         });
       } catch (error) {
-        console.error("Failed to update product status:", error);
+        console.error("Failed to update category status:", error);
 
         toast({
           title: "Error",
-          description: "Failed to update product status. Please try again.",
+          description: "Failed to update category status. Please try again.",
           variant: "destructive",
         });
       }
     }
 
     setShowModal(false);
-    setSelectedProduct(null);
+    setSelectedCategory(null);
   };
 
   const cancelToggle = () => {
     setShowModal(false);
-    setSelectedProduct(null);
+    setSelectedCategory(null);
   };
 
   if (isLoading)
@@ -96,7 +95,7 @@ export function CategoryPage() {
   if (error)
     return (
       <div className="flex items-center justify-center h-screen">
-        Error loading products.
+        Error loading Categories
       </div>
     );
 
@@ -107,12 +106,12 @@ export function CategoryPage() {
         <NavbarAdmin
           isDarkMode={isDarkMode}
           setIsDarkMode={setIsDarkMode}
-          pageName="PRODUCTS MANAGEMENT"
+          pageName="CATEGORY MANAGEMENT"
         />
         <div className="p-6 space-y-8">
           <div className="flex justify-end items-center">
             <Button
-              onClick={() => navigate("/admin/products/add-products")}
+              onClick={() => navigate("/admin/category/add-category")}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Plus className="mr-2 h-4 w-4" /> Add Categories
@@ -135,30 +134,19 @@ export function CategoryPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((product) => (
-                    <TableRow key={product._id}>
-                      <TableCell>
-                        <img
-                          src={product.thumbnailImage}
-                          alt={product.name}
-                          className="w-12 h-12 object-cover rounded-md"
-                        />
-                      </TableCell>
+                  {categories?.map((category) => (
+                    <TableRow key={category?._id}>
                       <TableCell className="font-medium">
-                        {product.productName}
+                        {category?.name}
                       </TableCell>
-                      <TableCell>{product.category}</TableCell>
-                      <TableCell>{product.brand}</TableCell>
-                      <TableCell>${product.price.toFixed(2)}</TableCell>
-                      <TableCell>{product.stock}</TableCell>
                       <TableCell>
                         <Badge
-                          variant={product.listed ? "success" : "secondary"}
+                          variant={category?.listed ? "success" : "secondary"}
                           className={`font-semibold bh bg-red-700 ${
-                            product.listed ? "bg-green-600" : "bg-red-600"
+                            category?.listed ? "bg-green-600" : "bg-red-600"
                           }`}
                         >
-                          {product.listed ? "Listed" : "Unlisted"}
+                          {category?.listed ? "Listed" : "Unlisted"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -169,22 +157,22 @@ export function CategoryPage() {
                             className="h-8 w-8"
                             onClick={() =>
                               navigate(
-                                `/admin/products/edit-products/${product._id}`
+                                `/admin/products/edit-products/${category._id}`
                               )
                             }
                           >
                             <Edit className="h-4 w-4" />
-                            <span className="sr-only">Edit product</span>
+                            <span className="sr-only">Edit category</span>
                           </Button>
                           <Switch
-                            checked={product.listed}
-                            onCheckedChange={() => handleToggleClick(product)}
+                            checked={category?.listed}
+                            onCheckedChange={() => handleToggleClick(category)}
                             className="data-[state=checked]:bg-green-500"
                           >
                             <span className="sr-only">
-                              {product.listed
-                                ? "Unlist product"
-                                : "List product"}
+                              {category?.listed
+                                ? "Unlist category"
+                                : "List category"}
                             </span>
                           </Switch>
                         </div>
@@ -197,41 +185,15 @@ export function CategoryPage() {
           </Card>
         </div>
       </main>
-
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl">
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
-              Confirm Action
-            </DialogTitle>
-            <DialogDescription className="text-gray-500 dark:text-gray-400">
-              Are you sure you want to{" "}
-              {selectedProduct?.listed ? "unlist" : "list"} this product? This
-              action can be reversed later.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="sm:justify-start">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={cancelToggle}
-              className="mt-2 sm:mt-0"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="default"
-              onClick={confirmToggleProduct}
-              className="mt-2 sm:mt-0 bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={isUpdating}
-            >
-              {isUpdating ? "Updating..." : "Confirm"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        isOpen={showModal}
+        onClose={cancelToggle}
+        onConfirm={confirmToggleCategory}
+        title="Confirm Action"
+        description={`Are you sure you want to ${
+          selectedCategory?.listed ? "unlist" : "list"
+        } this category? This action can be reversed later.`}
+      />
     </div>
   );
 }

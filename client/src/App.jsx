@@ -16,6 +16,10 @@ import { ResetPasswordPage } from "./pages/user/ResetPasswordPage";
 import { OTPPageResetPassword } from "./pages/user/OTPPageResetPassword";
 import { ResetPasswordConfirmPage } from "./pages/user/ResetPasswordConfirmPage";
 import { CategoryPage } from "./pages/admin/CategoryPage";
+import { CategoryAddPage } from "./pages/admin/CategoryAddPage";
+import { UsersPage } from "./pages/admin/UsersPage";
+import { ProductDetailsPage } from "./pages/user/ProductDetailsPage";
+import { BrandPage } from "./pages/admin/BrandPage";
 
 const App = () => {
   return (
@@ -34,11 +38,12 @@ const App = () => {
         />
         <Route path="/sample" element={<SamplePage />} />
 
+        {/* User Protected Routes */}
         <Route
-          //  User Protected Routes
           element={<UserProtectedRoute allowedRoles={["user", "admin"]} />}
         >
-          <Route path="/user/home" element={<UserHomePage />} />
+          <Route path="/home" element={<UserHomePage />} />
+          <Route path="/product-details/:id" element={<ProductDetailsPage />} />
         </Route>
 
         {/* Admin Protected Routes */}
@@ -54,6 +59,12 @@ const App = () => {
             element={<ProductEditPage />}
           />
           <Route path="/admin/category" element={<CategoryPage />} />
+          <Route
+            path="/admin/category/add-category"
+            element={<CategoryAddPage />}
+          />
+          <Route path="/admin/users" element={<UsersPage />} />
+          <Route path="/admin/brands" element={<BrandPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

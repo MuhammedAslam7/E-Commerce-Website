@@ -11,7 +11,7 @@ const navItems = [
 
 export const SecondNavbarUser = () => {
   return (
-    <nav className="bg-black py-3 h-[75px] mt-20 flex items-center">
+    <nav className="bg-black py-3 h-[75px] mt-20 flex items-center w-full">
       <div className="container mx-auto px-4">
         <ul className="flex justify-center space-x-8 font-rubik uppercase">
           {navItems.map((item) => (

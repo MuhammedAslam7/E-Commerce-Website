@@ -4,23 +4,22 @@ import { baseQueryWithReauth } from "./baseQueryUser";
 export const userApi = createApi({
   reducerPath: "userApi",
   baseQuery: baseQueryWithReauth,
-  // tagTypes: ["home"],
+  tagTypes: ["home"],
   endpoints: (builder) => ({
     userHome: builder.query({
       query: () => ({
         url: "user/home",
         method: "GET",
-        // providesTags: ["home"],
+        providesTags: ["home"],
       }),
     }),
-    // updateUserProfile: builder.mutation({
-    //   query: (profileData) => ({
-    //     url: "user/profile",
-    //     method: "PUT",
-    //     body: profileData,
-    //   }),
-    // }),
+    ProductDetails: builder.query({
+      query: (id) => ({
+        url: `user/product-details/${id}`,
+        method: "GET",
+      }),
+    }),
   }),
 });
 
-export const { useUserHomeQuery, useUpdateUserProfileMutation } = userApi;
+export const { useUserHomeQuery, useProductDetailsQuery } = userApi;

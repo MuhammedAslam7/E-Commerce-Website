@@ -13,17 +13,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Edit, AlertTriangle } from "lucide-react";
+import { Plus, Edit } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 // Importing the API hook
 import {
@@ -31,6 +23,7 @@ import {
   useUpdateProductStatusMutation,
 } from "@/services/api/admin/adminApi";
 import { useNavigate } from "react-router-dom";
+import { ConfirmDialog } from "@/components/admin/modals/ConfirmDilalog";
 
 export function ProductPage() {
   const { toast } = useToast();
@@ -40,8 +33,7 @@ export function ProductPage() {
 
   const [showModal, setShowModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [updateProductStatus, { isLoading: isUpdating }] =
-    useUpdateProductStatusMutation();
+  const [updateProductStatus] = useUpdateProductStatusMutation();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
@@ -55,8 +47,8 @@ export function ProductPage() {
     if (selectedProduct) {
       try {
         await updateProductStatus({
-          id: selectedProduct._id,
-          listed: !selectedProduct.listed,
+          id: selectedProduct?._id,
+          listed: !selectedProduct?.listed,
         }).unwrap();
 
         toast({
@@ -140,29 +132,29 @@ export function ProductPage() {
                 </TableHeader>
                 <TableBody>
                   {products.map((product) => (
-                    <TableRow key={product._id}>
+                    <TableRow key={product?._id}>
                       <TableCell>
                         <img
-                          src={product.thumbnailImage}
-                          alt={product.name}
+                          src={product?.thumbnailImage}
+                          alt={product?.name}
                           className="w-12 h-12 object-cover rounded-md"
                         />
                       </TableCell>
                       <TableCell className="font-medium">
-                        {product.productName}
+                        {product?.productName}
                       </TableCell>
-                      <TableCell>{product.category}</TableCell>
-                      <TableCell>{product.brand}</TableCell>
-                      <TableCell>${product.price.toFixed(2)}</TableCell>
-                      <TableCell>{product.stock}</TableCell>
+                      <TableCell>{product?.category?.name}</TableCell>
+                      <TableCell>{product?.brand}</TableCell>
+                      <TableCell>₹ {product?.price.toFixed(2)}</TableCell>
+                      <TableCell>{product?.stock}</TableCell>
                       <TableCell>
                         <Badge
-                          variant={product.listed ? "success" : "secondary"}
+                          variant={product?.listed ? "success" : "secondary"}
                           className={`font-semibold bh bg-red-700 ${
-                            product.listed ? "bg-green-600" : "bg-red-600"
+                            product?.listed ? "bg-green-600" : "bg-red-600"
                           }`}
                         >
-                          {product.listed ? "Listed" : "Unlisted"}
+                          {product?.listed ? "Listed" : "Unlisted"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -173,7 +165,7 @@ export function ProductPage() {
                             className="h-8 w-8"
                             onClick={() =>
                               navigate(
-                                `/admin/products/edit-products/${product._id}`
+                                `/admin/products/edit-products/${product?._id}`
                               )
                             }
                           >
@@ -181,12 +173,12 @@ export function ProductPage() {
                             <span className="sr-only">Edit product</span>
                           </Button>
                           <Switch
-                            checked={product.listed}
+                            checked={product?.listed}
                             onCheckedChange={() => handleToggleClick(product)}
                             className="data-[state=checked]:bg-green-500"
                           >
                             <span className="sr-only">
-                              {product.listed
+                              {product?.listed
                                 ? "Unlist product"
                                 : "List product"}
                             </span>
@@ -202,40 +194,15 @@ export function ProductPage() {
         </div>
       </main>
 
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl">
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
-              Confirm Action
-            </DialogTitle>
-            <DialogDescription className="text-gray-500 dark:text-gray-400">
-              Are you sure you want to{" "}
-              {selectedProduct?.listed ? "unlist" : "list"} this product? This
-              action can be reversed later.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="sm:justify-start">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={cancelToggle}
-              className="mt-2 sm:mt-0"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="default"
-              onClick={confirmToggleProduct}
-              className="mt-2 sm:mt-0 bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={isUpdating}
-            >
-              {isUpdating ? "Updating..." : "Confirm"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        isOpen={showModal}
+        onClose={cancelToggle}
+        onConfirm={confirmToggleProduct}
+        title="Confirm Action"
+        description={`Are you sure you want to ${
+          selectedProduct?.listed ? "unlist" : "list"
+        } this product? This action can be reversed later.`}
+      />
     </div>
   );
 }

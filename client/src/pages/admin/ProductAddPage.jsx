@@ -17,17 +17,11 @@ import {
 } from "@/components/ui/select";
 import { X, Upload } from "lucide-react";
 import { useAddProductsMutation } from "@/services/api/admin/adminApi";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { ImageCropModal } from "@/components/admin/modals/ImageCropModal";
+import { ConfirmDialog } from "@/components/admin/modals/ConfirmDilalog";
 
 export function ProductAddPage() {
   const { toast } = useToast();
@@ -44,7 +38,7 @@ export function ProductAddPage() {
     price: "",
     stock: "",
     description: "",
-    category: "",
+    categoryName: "",
     color: "",
   });
   useEffect(() => {
@@ -116,7 +110,7 @@ export function ProductAddPage() {
         price: "",
         stock: "",
         description: "",
-        category: "",
+        categoryName: "",
         color: "",
       });
       setImages([]);
@@ -156,7 +150,7 @@ export function ProductAddPage() {
                         <Input
                           id="productName"
                           name="productName"
-                          value={formData.productName}
+                          value={formData?.productName}
                           onChange={handleInputChange}
                           placeholder="Enter product name"
                           className="mt-1"
@@ -169,7 +163,7 @@ export function ProductAddPage() {
                         <Input
                           id="brand"
                           name="brand"
-                          value={formData.brand}
+                          value={formData?.brand}
                           onChange={handleInputChange}
                           placeholder="Enter brand name"
                           className="mt-1"
@@ -186,7 +180,7 @@ export function ProductAddPage() {
                           id="price"
                           type="number"
                           name="price"
-                          value={formData.price}
+                          value={formData?.price}
                           onChange={handleInputChange}
                           placeholder="Enter price"
                           className="mt-1"
@@ -200,7 +194,7 @@ export function ProductAddPage() {
                           id="stock"
                           type="number"
                           name="stock"
-                          value={formData.stock}
+                          value={formData?.stock}
                           onChange={handleInputChange}
                           placeholder="Enter stock quantity"
                           className="mt-1"
@@ -218,7 +212,7 @@ export function ProductAddPage() {
                       <Textarea
                         id="description"
                         name="description"
-                        value={formData.description}
+                        value={formData?.description}
                         onChange={handleInputChange}
                         placeholder="Enter product description"
                         rows={3}
@@ -235,21 +229,21 @@ export function ProductAddPage() {
                           Category
                         </Label>
                         <Select
-                          value={formData.category}
+                          value={formData?.categoryName}
                           onValueChange={(value) =>
-                            setFormData({ ...formData, category: value })
+                            setFormData({ ...formData, categoryName: value })
                           }
                         >
                           <SelectTrigger id="category" className="mt-1">
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="head-phones">
-                              Head phones
+                            <SelectItem value="Head-phone">
+                              Head phone
                             </SelectItem>
-                            <SelectItem value="neck-band">Neck Band</SelectItem>
-                            <SelectItem value="ear-buds">Ear Buds</SelectItem>
-                            <SelectItem value="speakers">Speakers</SelectItem>
+                            <SelectItem value="Neck Band">Neck Band</SelectItem>
+                            <SelectItem value="Ear Buds">Ear Buds</SelectItem>
+                            <SelectItem value="Speaker">Speaker</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -258,7 +252,7 @@ export function ProductAddPage() {
                           Color
                         </Label>
                         <Select
-                          value={formData.color}
+                          value={formData?.color}
                           onValueChange={(value) =>
                             setFormData({ ...formData, color: value })
                           }
@@ -304,12 +298,12 @@ export function ProductAddPage() {
                       </div>
                     </div>
 
-                    {images.length > 0 && (
+                    {images?.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">
                         {images.map((image, index) => (
                           <div key={index} className="relative group">
                             <img
-                              src={image.preview}
+                              src={image?.preview}
                               alt={`Product image ${index + 1}`}
                               className="cursor-pointer h-16 w-16 object-cover rounded-md"
                               onClick={() => openCropModal(image, index)}
@@ -341,25 +335,13 @@ export function ProductAddPage() {
         </div>
       </main>
       <Toaster />
-      <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Product Addition</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to add this product?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsConfirmModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={confirmSubmit}>Confirm</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={confirmSubmit}
+        title="Confirm Product Addition"
+        description="Are you sure you want to add this product?"
+      />
       {currentImage && (
         <ImageCropModal
           isOpen={cropModalOpen}

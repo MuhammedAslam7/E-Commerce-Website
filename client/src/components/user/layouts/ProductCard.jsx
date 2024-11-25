@@ -8,15 +8,26 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useNavigate } from "react-router-dom";
 
 export const ProductCard = ({
   thumbnailImage,
   productName,
   description,
   price,
+  productId,
 }) => {
+  const navigate = useNavigate();
+
+  const handleCardClick = (e) => {
+    e.preventDefault();
+    navigate(`/product-details/${productId}`);
+  };
   return (
-    <Card className="group relative overflow-hidden transition-all hover:shadow-lg">
+    <Card
+      className="group relative overflow-hidden transition-all hover:shadow-lg cursor-pointer"
+      onClick={handleCardClick}
+    >
       <CardHeader className="p-0">
         <div className="aspect-square overflow-hidden">
           <img

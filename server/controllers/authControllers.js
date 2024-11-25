@@ -315,3 +315,69 @@ export const confirmPasswordReset = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+////////////////////////////////////////////////////
+export const googleAuth = async (req, res) => {
+  const { username, email } = req.body;
+
+  console.log(username, email);
+  try {
+    const user = await User.findOne({ email });
+
+    if (user) {
+      const refreshToken = createRefreshToken(user);
+      const accessToken = createAccessToken(user);
+
+      res
+        .status(200)
+        .cookie("refreshToken", refreshToken, {
+          path: "/",
+          httpOnly: true,
+          sameSite: "none",
+          secure: true,
+          maxAge: 60 * 60 * 24 * 1000, // 1 day
+        })
+        .json({
+          success: true,
+          message: "You are logged in ",
+          accessToken,
+          data: {
+            user: { userId: user._id, email: user.email, role: user.role },
+          },
+        });
+    } else {
+      const hashedPassword = await bcryptjs.hash(`${email}${username}`, 10);
+
+      const newUser = await User.create({
+        username,
+        email,
+        password: hashedPassword,
+      });
+      const refreshToken = createRefreshToken(newUser);
+      const accessToken = createAccessToken(newUser);
+
+      res
+        .status(200)
+        .cookie("refreshToken", refreshToken, {
+          path: "/",
+          httpOnly: true,
+          sameSite: "none",
+          secure: true,
+          maxAge: 60 * 60 * 24 * 1000, // 1 day
+        })
+        .json({
+          success: true,
+          message: "You are logged in ",
+          accessToken,
+          data: {
+            user: {
+              userId: newUser._id,
+              email: newUser.email,
+              role: newUser.role,
+            },
+          },
+        });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
