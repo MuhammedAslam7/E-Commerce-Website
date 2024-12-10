@@ -7,10 +7,18 @@ export const adminApi = createApi({
   tagTypes: ["Product", "Category", "Users", "Brand"],
   endpoints: (builder) => ({
     addProducts: builder.mutation({
-      query: (formData) => ({
+      query: (productData) => ({
         url: "admin/products/add-products",
         method: "POST",
-        body: formData,
+        body: productData,
+      }),
+      invalidatesTags: ["Product"],
+    }),
+    addVariants: builder.mutation({
+      query: ({ productData, productId }) => ({
+        url: `admin/products/add-variants/${productId}`,
+        method: "PATCH",
+        body: { productData },
       }),
       invalidatesTags: ["Product"],
     }),
@@ -66,6 +74,14 @@ export const adminApi = createApi({
       }),
       invalidatesTags: ["Category"],
     }),
+    updateCategory: builder.mutation({
+      query: ({ id, name, description }) => ({
+        url: `admin/category/update-category/${id}`,
+        method: "PUT",
+        body: { name, description },
+      }),
+      invalidatesTags: ["Category"],
+    }),
     getAllUsers: builder.query({
       query: () => ({
         url: "admin/users/all-users",
@@ -104,6 +120,14 @@ export const adminApi = createApi({
       }),
       invalidatesTags: ["Brands"],
     }),
+    updateBrand: builder.mutation({
+      query: ({ id, name, description }) => ({
+        url: `admin/brands/update-brand/${id}`,
+        method: "PUT",
+        body: { name, description },
+      }),
+      invalidatesTags: ["Brand"],
+    }),
   }),
 });
 
@@ -111,14 +135,17 @@ export const {
   useGetAllProductsQuery,
   useUpdateProductStatusMutation,
   useAddProductsMutation,
+  useAddVariantsMutation,
   useGetProductByIdQuery,
   useUpdateProductByIdMutation,
   useAddCategoriesMutation,
   useGetAllCategoriesQuery,
   useUpdateCategoryStatusMutation,
+  useUpdateCategoryMutation,
   useGetAllUsersQuery,
   useUpdateUserStatusMutation,
   useAddBrandsMutation,
   useGetAllBrandsQuery,
   useUpdateBrandStatusMutation,
+  useUpdateBrandMutation,
 } = adminApi;

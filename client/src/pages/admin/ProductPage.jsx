@@ -13,10 +13,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Edit } from "lucide-react";
+import { Plus, Edit, PlusIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { useToaster } from "@/utils/Toaster";
 // Importing the API hook
 import {
   useGetAllProductsQuery,
@@ -26,7 +26,7 @@ import { useNavigate } from "react-router-dom";
 import { ConfirmDialog } from "@/components/admin/modals/ConfirmDilalog";
 
 export function ProductPage() {
-  const { toast } = useToast();
+  const toast = useToaster();
   const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const { data: products = [], isLoading, error } = useGetAllProductsQuery();
@@ -51,21 +51,21 @@ export function ProductPage() {
           listed: !selectedProduct?.listed,
         }).unwrap();
 
-        toast({
-          title: "Success",
-          Description: `Product ${
-            selectedProduct.listed ? "unlisted" : "listed"
+        toast(
+          "Success",
+          `${selectedProduct?.productName} ${
+            selectedProduct?.listed ? "unlisted" : "listed"
           } successfully.`,
-          variant: "default",
-        });
+          "#22c55e"
+        );
       } catch (error) {
         console.error("Failed to update product status:", error);
 
-        toast({
-          title: "Error",
-          description: "Failed to update product status. Please try again.",
-          variant: "destructive",
-        });
+        toast(
+          "Error",
+          "Failed to update product status. Please try again.",
+          "#ff0000"
+        );
       }
     }
 
@@ -111,27 +111,38 @@ export function ProductPage() {
             </Button>
           </div>
           <Card className="shadow-lg">
-            <CardHeader className="bg-gray-50 dark:bg-gray-800">
-              <CardTitle className="text-xl text-gray-800 dark:text-gray-200">
-                Product List
-              </CardTitle>
-            </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[100px]">Image</TableHead>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Brand</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Stock</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="w-[100px] text-orange-600 uppercase">
+                      Image
+                    </TableHead>
+                    <TableHead className="text-orange-600 uppercase">
+                      Product
+                    </TableHead>
+                    <TableHead className="text-orange-600 uppercase">
+                      Category
+                    </TableHead>
+                    <TableHead className="text-orange-600 uppercase">
+                      Brand
+                    </TableHead>
+                    <TableHead className="text-orange-600 uppercase">
+                      Price
+                    </TableHead>
+                    <TableHead className="text-orange-600 uppercase">
+                      Stock
+                    </TableHead>
+                    <TableHead className="text-orange-600 uppercase">
+                      Status
+                    </TableHead>
+                    <TableHead className="text-right text-orange-600 uppercase">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((product) => (
+                  {products?.map((product) => (
                     <TableRow key={product?._id}>
                       <TableCell>
                         <img
@@ -144,7 +155,7 @@ export function ProductPage() {
                         {product?.productName}
                       </TableCell>
                       <TableCell>{product?.category?.name}</TableCell>
-                      <TableCell>{product?.brand}</TableCell>
+                      <TableCell>{product?.brand?.name}</TableCell>
                       <TableCell>₹ {product?.price.toFixed(2)}</TableCell>
                       <TableCell>{product?.stock}</TableCell>
                       <TableCell>
@@ -161,8 +172,22 @@ export function ProductPage() {
                         <div className="flex items-center justify-end space-x-2">
                           <Button
                             variant="outline"
+                            className="h-8 w-8"
+                            title="Add Variants"
+                            onClick={() =>
+                              navigate(
+                                `/admin/products/add-variants/${product?._id}`,
+                                { state: { productName: product?.productName } }
+                              )
+                            }
+                          >
+                            <PlusIcon />
+                          </Button>
+                          <Button
+                            variant="outline"
                             size="icon"
                             className="h-8 w-8"
+                            title="Edit Product"
                             onClick={() =>
                               navigate(
                                 `/admin/products/edit-products/${product?._id}`

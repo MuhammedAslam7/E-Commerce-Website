@@ -5,18 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
-import { useAddCategoriesMutation } from "@/services/api/admin/adminApi";
+import { useAddBrandsMutation } from "@/services/api/admin/adminApi";
 import { ConfirmDialog } from "@/components/admin/modals/ConfirmDilalog";
+
 import { useToaster } from "@/utils/Toaster";
 
-export const CategoryAddPage = () => {
+export const BrandAddPage = () => {
   const toast = useToaster();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
   });
-  const [addCategories, { isLoading }] = useAddCategoriesMutation();
+  const [addBrands, { isLoading }] = useAddBrandsMutation();
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
 
   useEffect(() => {
@@ -35,13 +36,13 @@ export const CategoryAddPage = () => {
     setConfirmModalOpen(false);
 
     try {
-      await addCategories(formData).unwrap();
+      await addBrands(formData).unwrap();
       console.log("added");
-      toast("Success", "Category added successfully!", "#22c55e");
+      toast("Success", "Brand added successfully!", "#22c55e");
       setFormData({ name: "", description: "" });
     } catch (error) {
-      console.log(error.message);
-      toast("Error", "Failed to add Category. Please try again.", "#ff0000");
+      console.log(error?.message);
+      toast("Error", "Failed to add Brand. Please try again.", "#ff0000");
     }
   };
 
@@ -52,7 +53,7 @@ export const CategoryAddPage = () => {
         <NavbarAdmin
           isDarkMode={isDarkMode}
           setIsDarkMode={setIsDarkMode}
-          pageName="ADD CATEGORIES"
+          pageName="ADD BRANDS"
         />
 
         <div className="flex-1 overflow-auto p-4 ">
@@ -66,32 +67,32 @@ export const CategoryAddPage = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
                   <label
-                    htmlFor="categoryName"
+                    htmlFor="brandName"
                     className="text-sm font-medium text-gray-700 dark:text-gray-200"
                   >
                     Category Name
                   </label>
                   <Input
-                    id="categoryName"
+                    id="brandName"
                     name="name"
-                    placeholder="Enter category name"
-                    value={formData.name}
+                    placeholder="Enter brand name"
+                    value={formData?.name}
                     onChange={handleChange}
                     className="w-full px-3 py-2 border rounded-md dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   />
                 </div>
                 <div className="space-y-2">
                   <label
-                    htmlFor="categoryDescription"
+                    htmlFor="brandDescription"
                     className="text-sm font-medium text-gray-700 dark:text-gray-200"
                   >
                     Description
                   </label>
                   <Textarea
-                    id="categoryDescription"
-                    placeholder="Enter category description"
+                    id="brandDescription"
+                    placeholder="Enter brand description"
                     name="description"
-                    value={formData.description}
+                    value={formData?.description}
                     onChange={handleChange}
                     className="w-full px-3 py-2 border rounded-md dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                     rows={4}
@@ -102,7 +103,7 @@ export const CategoryAddPage = () => {
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded transition duration-300"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Adding Category" : "Add Category"}
+                  {isLoading ? "Adding Brand" : "Add Brand"}
                 </Button>
               </form>
             </CardContent>
@@ -113,8 +114,8 @@ export const CategoryAddPage = () => {
         isOpen={confirmModalOpen}
         onClose={() => setConfirmModalOpen(false)}
         onConfirm={confirmSubmit}
-        title="Confirm Category Addition"
-        description="Are you sure you want to add this category"
+        title="Confirm Brand Addition"
+        description="Are you sure you want to add this Brand"
       />
     </div>
   );

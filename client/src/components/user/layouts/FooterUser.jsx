@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 export const FooterUser = () => {
   return (
-    <footer className="bg-black py-12 text-white">
+    <footer className="bg-black mt-10 py-12 text-white">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           <div>

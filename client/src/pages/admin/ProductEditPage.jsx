@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { SidebarAdmin } from "@/components/admin/layouts/SidebarAdmin";
@@ -25,7 +24,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { ImageCropModal } from "@/components/admin/modals/ImageCropModal";
-
 export function ProductEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -33,8 +31,6 @@ export function ProductEditPage() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [images, setImages] = useState([]);
   const { data: product, isLoading, error } = useGetProductByIdQuery(id);
-  console.log(product);
-
   const [updateProduct, { isLoading: isUpdating }] =
     useUpdateProductByIdMutation();
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -49,11 +45,9 @@ export function ProductEditPage() {
     category: "",
     color: "",
   });
-
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
-
   useEffect(() => {
     if (product) {
       setFormData({
@@ -64,7 +58,6 @@ export function ProductEditPage() {
         category: product.category || "", // Added category
         color: product.variants?.[0]?.color || "",
       });
-
       if (
         product.variants &&
         product.variants[0] &&
@@ -73,7 +66,7 @@ export function ProductEditPage() {
         setImages(
           product.variants[0].images.map((url) => ({
             preview: url,
-            file: null, // We don't have the file object for existing images
+            file: null,
           }))
         );
       } else {
@@ -81,7 +74,6 @@ export function ProductEditPage() {
       }
     }
   }, [product]);
-
   useEffect(() => {
     return () => {
       images.forEach((image) => {
@@ -91,7 +83,6 @@ export function ProductEditPage() {
       });
     };
   }, [images]);
-
   const handleImageUpload = useCallback((files) => {
     const newImages = Array.from(files).map((file) => ({
       file,
@@ -99,14 +90,13 @@ export function ProductEditPage() {
     }));
     setImages((prevImages) => [...prevImages, ...newImages].slice(0, 5));
   }, []);
-
   const openCropModal = (image, index) => {
     setCurrentImage(image.preview);
     setCurrentImageIndex(index);
     setCropModalOpen(true);
   };
-
   const handleCropComplete = (croppedImageUrl) => {
+    console.log(croppedImageUrl);
     setImages((prevImages) => {
       const newImages = [...prevImages];
       newImages[currentImageIndex] = {
@@ -116,41 +106,31 @@ export function ProductEditPage() {
       return newImages;
     });
   };
-
   const removeImage = (index) => {
     setImages((prevImages) => prevImages.filter((_, i) => i !== index));
   };
-
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsConfirmModalOpen(true);
   };
-
   const confirmSubmit = async () => {
     setIsConfirmModalOpen(false);
     const productData = new FormData();
-
     for (const key in formData) {
       productData.append(key, formData[key]);
     }
-
-    // Append existing images that don't have a file object
     const existingImages = images
       .filter((image) => !image.file)
       .map((image) => image.preview);
     productData.append("existingImages", JSON.stringify(existingImages));
-
-    // Append new images
     images
       .filter((image) => image.file)
       .forEach((image) => {
         productData.append(`images`, image.file);
       });
-
     try {
       await updateProduct({ id, productData }).unwrap();
       toast({
@@ -167,7 +147,6 @@ export function ProductEditPage() {
       });
     }
   };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -175,7 +154,6 @@ export function ProductEditPage() {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -183,7 +161,6 @@ export function ProductEditPage() {
       </div>
     );
   }
-
   return (
     <div className={`flex h-screen ${isDarkMode ? "dark" : ""}`}>
       <SidebarAdmin />
@@ -231,7 +208,6 @@ export function ProductEditPage() {
                         />
                       </div>
                     </div>
-
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label
@@ -264,7 +240,6 @@ export function ProductEditPage() {
                         />
                       </div>
                     </div>
-
                     <div>
                       <Label
                         htmlFor="description"
@@ -282,7 +257,6 @@ export function ProductEditPage() {
                         className="mt-1"
                       />
                     </div>
-
                     <div>
                       <Label htmlFor="category" className="text-sm font-medium">
                         Category
@@ -290,14 +264,13 @@ export function ProductEditPage() {
                       <Input
                         id="category"
                         name="category"
-                        value={formData.category}
+                        value={formData.category.name}
                         onChange={handleInputChange}
                         placeholder="Enter category"
                         className="mt-1"
                       />
                     </div>
                   </div>
-
                   <div className="space-y-6">
                     <div>
                       <Label htmlFor="images" className="text-sm font-medium">
@@ -323,7 +296,6 @@ export function ProductEditPage() {
                         </label>
                       </div>
                     </div>
-
                     {images.length > 0 && (
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                         {images.map((image, index) => (

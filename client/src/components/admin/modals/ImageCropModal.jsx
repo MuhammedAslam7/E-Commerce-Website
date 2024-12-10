@@ -1,4 +1,3 @@
-"use client";
 
 import { useState, useRef, useCallback } from "react";
 import ReactCrop from "react-image-crop";

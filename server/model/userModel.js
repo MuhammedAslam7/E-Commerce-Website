@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
+import { addressSchema } from "./addressSchema.js";
 
-//Creating user Schema
 const userSchema = new mongoose.Schema(
   {
     username: {
@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
     phone: {
-      type: String,
+      type: Number,
     },
     password: {
       type: String,
@@ -27,6 +27,7 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    addresses: [addressSchema],
   },
   { timestamps: true }
 );

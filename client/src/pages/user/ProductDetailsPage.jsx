@@ -22,13 +22,20 @@ import { NavbarUser } from "@/components/user/layouts/NavbarUser";
 import { SecondNavbarUser } from "@/components/user/layouts/SecondNavbarUser";
 import { useProductDetailsQuery } from "@/services/api/user/userApi";
 import { useParams } from "react-router-dom";
-
+import { useSelector } from "react-redux";
+import { useAddToCartMutation } from "@/services/api/user/userApi";
+import { useToaster } from "@/utils/Toaster";
 export function ProductDetailsPage() {
+  const toast = useToaster();
   const [quantity, setQuantity] = useState(1);
   const [currentImage, setCurrentImage] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const { id } = useParams();
   const { data: product, isLoading, error } = useProductDetailsQuery(id);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
+  const userId = useSelector((state) => state?.user?.userId);
 
   const images = product?.variants[0]?.images || [];
 
@@ -54,10 +61,35 @@ export function ProductDetailsPage() {
     setIsWishlisted(!isWishlisted);
   };
 
+  const handleMouseMove = (event) => {
+    const { left, top, width, height } = event.target.getBoundingClientRect();
+    const x = ((event.clientX - left) / width) * 100;
+    const y = ((event.clientY - top) / height) * 100;
+    setMousePosition({ x, y });
+  };
+
   useEffect(() => {
     const timer = setInterval(nextImage, 5000);
     return () => clearInterval(timer);
   }, [images.length]);
+
+  const handleAddToCart = async () => {
+    try {
+      const response = await addToCart({
+        productId: id,
+        userId,
+      }).unwrap();
+      toast("Success", response?.message, "#22c55e");
+    } catch (error) {
+      console.log();
+      if (error.status == 409) {
+        toast("Item already  in cart", error?.data?.message, "#f97316");
+      } else {
+        console.log(error);
+        toast("Error", "An Error Occured Please try again later..", "#ff0000");
+      }
+    }
+  };
 
   if (isLoading) {
     return <p>Loading Product Details......</p>;
@@ -71,22 +103,34 @@ export function ProductDetailsPage() {
       <NavbarUser />
       <SecondNavbarUser />
 
-      <div className="grid md:grid-cols-2 gap-12 px-[220px] mt-10">
+      <div className="grid md:grid-cols-2 gap-12 px-4 md:px-8 lg:px-16 xl:px-[220px] mt-10">
         {/* Product Image Carousel */}
         <Card className="relative overflow-hidden rounded-xl shadow-lg h-[500px]">
           <CardContent className="p-0">
-            <div className="relative aspect-square">
+            <div className="relative aspect-square overflow-hidden">
               <AnimatePresence mode="wait">
-                <motion.img
+                <motion.div
                   key={currentImage}
-                  src={images[currentImage]}
-                  alt={`boAt Rockerz 425 - Image ${currentImage + 1}`}
-                  className="w-full h-full object-cover"
+                  className="relative w-full h-full"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.5 }}
-                />
+                >
+                  <img
+                    src={images[currentImage]}
+                    alt={`boAt Rockerz 425 - Image ${currentImage + 1}`}
+                    className="w-full h-full object-cover"
+                    style={{
+                      transformOrigin: `${mousePosition.x}% ${mousePosition.y}%`,
+                      transform: isZoomed ? "scale(2)" : "scale(1)",
+                      transition: "transform 0.2s ease-out",
+                    }}
+                    onMouseEnter={() => setIsZoomed(true)}
+                    onMouseLeave={() => setIsZoomed(false)}
+                    onMouseMove={handleMouseMove}
+                  />
+                </motion.div>
               </AnimatePresence>
               <button
                 onClick={previousImage}
@@ -131,7 +175,7 @@ export function ProductDetailsPage() {
               In Stock
             </Badge>
             <h2 className="text-2xl font-bold text-gray-900">
-              {product.productName}
+              {product?.productName}
             </h2>
             <div className="flex items-center gap-2">
               <div className="flex">
@@ -150,7 +194,7 @@ export function ProductDetailsPage() {
 
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-primary">
-              ₹{product.price}
+              ₹{product?.price}
             </span>
             <span className="text-sm text-muted-foreground line-through">
               ₹6000
@@ -161,7 +205,7 @@ export function ProductDetailsPage() {
           </div>
 
           <p className="text-sm text-gray-700 font-medium">
-            {product.description}
+            {product?.description}
           </p>
 
           <div className="space-y-1">
@@ -209,6 +253,7 @@ export function ProductDetailsPage() {
                   <Button
                     className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-sm py-1"
                     variant="secondary"
+                    onClick={handleAddToCart}
                   >
                     <ShoppingCart className="mr-1 h-3 w-3" /> ADD TO CART
                   </Button>
@@ -236,15 +281,19 @@ export function ProductDetailsPage() {
           <div className="space-y-2 pt-4 border-t text-xs">
             <p className="flex justify-between">
               <span className="font-medium text-gray-600">BRAND:</span>
-              <span className="text-gray-800">BOAT</span>
+              <span className="text-gray-800 font-bold">
+                {product?.brand?.name}
+              </span>
             </p>
             <p className="flex justify-between">
               <span className="font-medium text-gray-600">CATEGORY:</span>
-              <span className="text-gray-800">HEADPHONE</span>
+              <span className="text-gray-800 font-bold">
+                {product?.category?.name}
+              </span>
             </p>
             <p className="flex justify-between">
               <span className="font-medium text-gray-600">WARRANTY:</span>
-              <span className="text-gray-800">
+              <span className="text-gray-800 font-bold">
                 1 Year Manufacturer Warranty
               </span>
             </p>

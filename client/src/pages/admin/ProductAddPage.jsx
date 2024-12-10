@@ -18,13 +18,14 @@ import {
 import { X, Upload } from "lucide-react";
 import { useAddProductsMutation } from "@/services/api/admin/adminApi";
 
-import { useToast } from "@/hooks/use-toast";
-import { Toaster } from "@/components/ui/toaster";
+import { useToaster } from "@/utils/Toaster";
+
 import { ImageCropModal } from "@/components/admin/modals/ImageCropModal";
 import { ConfirmDialog } from "@/components/admin/modals/ConfirmDilalog";
+import axios from "axios";
 
 export function ProductAddPage() {
-  const { toast } = useToast();
+  const toast = useToaster();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [images, setImages] = useState([]);
   const [addProducts, { isLoading }] = useAddProductsMutation();
@@ -34,20 +35,20 @@ export function ProductAddPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(null);
   const [formData, setFormData] = useState({
     productName: "",
-    brand: "",
     price: "",
     stock: "",
     description: "",
     categoryName: "",
+    brandName: "",
     color: "",
   });
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
 
-  useEffect(() => {
-    return () => images.forEach((image) => URL.revokeObjectURL(image.preview));
-  }, [images]);
+  // useEffect(() => {
+  //   return () => images.forEach((image) => URL.revokeObjectURL(image.preview));
+  // }, [images]);
 
   const handleImageUpload = useCallback((files) => {
     const newImages = Array.from(files).map((file) => ({
@@ -89,38 +90,43 @@ export function ProductAddPage() {
 
   const confirmSubmit = async () => {
     setIsConfirmModalOpen(false);
-    const productData = new FormData();
-
-    for (const key in formData) {
-      productData.append(key, formData[key]);
-    }
-    images.forEach((image) => {
-      productData.append("images", image.file);
-    });
 
     try {
+      const imageUrls = await Promise.all(
+        images.map(async (image) => {
+          const formData = new FormData();
+          formData.append("file", image.file);
+          formData.append("upload_preset", import.meta.env.VITE_UPLOAD_PRESET);
+          const response = await axios.post(
+            `https://api.cloudinary.com/v1_1/${
+              import.meta.env.VITE_CLOUD_NAME
+            }/image/upload`,
+            formData
+          );
+          return response.data.secure_url;
+        })
+      );
+
+      const productData = {
+        ...formData,
+        images: imageUrls,
+      };
+
       await addProducts(productData).unwrap();
-      toast({
-        title: "Success",
-        description: "Product added successfully!",
-      });
+      toast("Success", "Product Added Successfully", "#22c55e");
       setFormData({
         productName: "",
-        brand: "",
         price: "",
         stock: "",
         description: "",
         categoryName: "",
+        brandName: "",
         color: "",
       });
       setImages([]);
     } catch (error) {
       console.log({ error: error.message });
-      toast({
-        title: "Error",
-        description: "Failed to add product. Please try again.",
-        variant: "destructive",
-      });
+      toast("Error", "Failed to add product. Please try again", "#ff0000");
     }
   };
 
@@ -162,8 +168,8 @@ export function ProductAddPage() {
                         </Label>
                         <Input
                           id="brand"
-                          name="brand"
-                          value={formData?.brand}
+                          name="brandName"
+                          value={formData?.brandName}
                           onChange={handleInputChange}
                           placeholder="Enter brand name"
                           className="mt-1"
@@ -238,12 +244,13 @@ export function ProductAddPage() {
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Head-phone">
-                              Head phone
+                            <SelectItem value="Head Phone">
+                              Head Phone
                             </SelectItem>
                             <SelectItem value="Neck Band">Neck Band</SelectItem>
                             <SelectItem value="Ear Buds">Ear Buds</SelectItem>
                             <SelectItem value="Speaker">Speaker</SelectItem>
+                            <SelectItem value="Ear Phone">Ear Phone</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -261,11 +268,11 @@ export function ProductAddPage() {
                             <SelectValue placeholder="Select color" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="black">Black</SelectItem>
-                            <SelectItem value="white">White</SelectItem>
-                            <SelectItem value="red">Red</SelectItem>
-                            <SelectItem value="blue">Blue</SelectItem>
-                            <SelectItem value="green">Green</SelectItem>
+                            <SelectItem value="Black">Black</SelectItem>
+                            <SelectItem value="White">White</SelectItem>
+                            <SelectItem value="Red">Red</SelectItem>
+                            <SelectItem value="Blue">Blue</SelectItem>
+                            <SelectItem value="Green">Green</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -299,19 +306,19 @@ export function ProductAddPage() {
                     </div>
 
                     {images?.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
+                      <div className="flex flex-wrap sm:grid sm:grid-cols-3 sm:flex-col gap-2 mt-2">
                         {images.map((image, index) => (
                           <div key={index} className="relative group">
                             <img
                               src={image?.preview}
                               alt={`Product image ${index + 1}`}
-                              className="cursor-pointer h-16 w-16 object-cover rounded-md"
+                              className="cursor-pointer w-full object-cover rounded-md"
                               onClick={() => openCropModal(image, index)}
                             />
                             <button
                               type="button"
                               onClick={() => removeImage(index)}
-                              className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                               <X className="h-3 w-3" />
                             </button>
@@ -334,7 +341,6 @@ export function ProductAddPage() {
           </Card>
         </div>
       </main>
-      <Toaster />
       <ConfirmDialog
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}

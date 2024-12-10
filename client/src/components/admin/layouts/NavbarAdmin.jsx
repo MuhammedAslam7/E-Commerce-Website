@@ -19,7 +19,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
-import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useAdminlogoutMutation } from "@/services/api/user/authApi";
 import { adminLogout } from "@/redux/slices/AdminSlice";
@@ -28,7 +27,7 @@ import { useDispatch } from "react-redux";
 export function NavbarAdmin({ isDarkMode, setIsDarkMode, pageName }) {
   const adminEmail = useSelector((state) => state.admin.email);
   const [adminlogout, { isLoading }] = useAdminlogoutMutation();
-  const navigate = useNavigate();
+
   const dispatch = useDispatch();
 
   const handleLogout = async () => {

@@ -45,6 +45,12 @@ export const authApi = createApi({
         method: "POST",
       }),
     }),
+    userlogout: builder.mutation({
+      query: () => ({
+        url: "auth/logout",
+        method: "POST",
+      }),
+    }),
     resetPassword: builder.mutation({
       query: (formData) => ({
         url: "/auth/reset-password",
@@ -83,6 +89,7 @@ export const {
   useSignInMutation,
   useAdminSignInMutation,
   useAdminlogoutMutation,
+  useUserlogoutMutation,
   useResetPasswordMutation,
   useResetVerifyOTpMutation,
   useConfirmResetPasswordMutation,

@@ -1,5 +1,5 @@
 import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { userlogOut } from "../../../redux/slices/userSlice";
+import { userLogout } from "../../../redux/slices/userSlice";
 
 const baseQuery = fetchBaseQuery({
   baseUrl: `${import.meta.env.VITE_API_BASE_URL}/api`,
@@ -33,7 +33,7 @@ export const baseQueryWithReauth = async (args, api, extraOptions) => {
         result = await baseQuery(args, api, extraOptions);
       }
     } else {
-      api.dispatch(userlogOut());
+      api.dispatch(userLogout());
     }
   }
 

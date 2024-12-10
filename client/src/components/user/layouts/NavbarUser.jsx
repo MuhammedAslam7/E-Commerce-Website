@@ -9,9 +9,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
 import { FaUser, FaShoppingCart, FaHeart } from "react-icons/fa";
+import { useUserlogoutMutation } from "@/services/api/user/authApi";
+import { useDispatch } from "react-redux";
+import { userLogout } from "@/redux/slices/userSlice";
+import { useNavigate } from "react-router-dom";
 
 export const NavbarUser = () => {
-  const handleLogout = async () => {};
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [userlogout] = useUserlogoutMutation();
+  const handleLogout = async () => {
+    try {
+      await userlogout().unwrap();
+      console.log("logout user");
+      dispatch(userLogout());
+      window.location.href = "sign-in";
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b shadow-sm">
       <div className="container mx-auto px-4 py-2">
@@ -81,7 +98,10 @@ export const NavbarUser = () => {
               aria-label="Shopping cart"
             >
               <div className="relative">
-                <FaShoppingCart className="h-6 w-6" />
+                <FaShoppingCart
+                  onClick={() => navigate("/cart")}
+                  className="h-6 w-6"
+                />
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                   0
                 </span>
@@ -96,7 +116,7 @@ export const NavbarUser = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/profile")}>
                   <User className="mr-2 size-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>

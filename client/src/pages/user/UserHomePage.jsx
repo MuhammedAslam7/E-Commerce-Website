@@ -15,6 +15,13 @@ export function UserHomePage() {
   console.log(downCard);
 
   console.log(data);
+
+  if (isLoading) {
+    return <h3>Home page is loading...</h3>;
+  }
+  if (error) {
+    return <h3>Erron on loading Home page, please try later..</h3>;
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       <NavbarUser />

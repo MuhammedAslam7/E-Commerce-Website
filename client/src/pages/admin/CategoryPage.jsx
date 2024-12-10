@@ -17,17 +17,19 @@ import { Plus, Edit } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 
-import { useToast } from "@/hooks/use-toast";
 // Importing the API hook
 import {
   useGetAllCategoriesQuery,
   useUpdateCategoryStatusMutation,
+  useUpdateCategoryMutation, // New mutation hook for updating categories
 } from "@/services/api/admin/adminApi";
 import { useNavigate } from "react-router-dom";
 import { ConfirmDialog } from "@/components/admin/modals/ConfirmDilalog";
+import { EditModal } from "@/components/admin/modals/EditModal";
+import { useToaster } from "@/utils/Toaster";
 
 export function CategoryPage() {
-  const { toast } = useToast();
+  const toast = useToaster();
   const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const {
@@ -41,6 +43,8 @@ export function CategoryPage() {
   const [showModal, setShowModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [updateCategoryStatus] = useUpdateCategoryStatusMutation();
+  const [updateCategory] = useUpdateCategoryMutation(); // New mutation hook
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
@@ -58,21 +62,21 @@ export function CategoryPage() {
           listed: !selectedCategory?.listed,
         }).unwrap();
 
-        toast({
-          title: "Success",
-          Description: `Category ${
-            selectedCategory?.listed ? "unlisted" : "listed"
-          } successfully.`,
-          variant: "default",
-        });
+        toast(
+          "Success",
+          `${selectedCategory?.name} Category ${
+            selectedCategory?.listed ? "Unlisted" : "Listed"
+          } Successfully`,
+          "#22c55e"
+        );
       } catch (error) {
         console.error("Failed to update category status:", error);
 
-        toast({
-          title: "Error",
-          description: "Failed to update category status. Please try again.",
-          variant: "destructive",
-        });
+        toast(
+          "Error",
+          "Failed to update category status. Please try again.",
+          "#ff0000"
+        );
       }
     }
 
@@ -82,6 +86,29 @@ export function CategoryPage() {
 
   const cancelToggle = () => {
     setShowModal(false);
+    setSelectedCategory(null);
+  };
+
+  const handleEdit = (category) => {
+    setSelectedCategory(category);
+    setShowEditModal(true);
+  };
+
+  const handleSave = async (data) => {
+    try {
+      await updateCategory({
+        id: selectedCategory._id,
+        ...data,
+      }).unwrap();
+
+      toast("Success", "Category updated successfully.", "#22c55e");
+    } catch (error) {
+      console.error("Failed to update category:", error);
+
+      toast("Error", "Failed to update category. Please try again", "#ff0000");
+    }
+
+    setShowEditModal(false);
     setSelectedCategory(null);
   };
 
@@ -127,10 +154,15 @@ export function CategoryPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Categories</TableHead>
-
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="text-orange-600 uppercase">
+                      Categories
+                    </TableHead>
+                    <TableHead className="text-orange-600 uppercase">
+                      Status
+                    </TableHead>
+                    <TableHead className="text-right text-orange-600 uppercase ">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -155,11 +187,7 @@ export function CategoryPage() {
                             variant="outline"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() =>
-                              navigate(
-                                `/admin/products/edit-products/${category._id}`
-                              )
-                            }
+                            onClick={() => handleEdit(category)}
                           >
                             <Edit className="h-4 w-4" />
                             <span className="sr-only">Edit category</span>
@@ -193,6 +221,12 @@ export function CategoryPage() {
         description={`Are you sure you want to ${
           selectedCategory?.listed ? "unlist" : "list"
         } this category? This action can be reversed later.`}
+      />
+      <EditModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleSave}
+        initialData={selectedCategory}
       />
     </div>
   );

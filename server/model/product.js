@@ -36,17 +36,17 @@ const productSchema = new mongoose.Schema(
       default: true,
       required: true,
     },
-    variants: [variantSchema],
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
       required: true,
     },
-    // brand: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Brand",
-    //   required: true,
-    // },
+    brand: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Brand",
+      required: true,
+    },
+    variants: [variantSchema],
   },
   {
     timestamps: true,

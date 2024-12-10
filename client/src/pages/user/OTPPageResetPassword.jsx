@@ -37,9 +37,9 @@ export const OTPPageResetPassword = () => {
       const remainingTime = Math.max(0, parseInt(savedTimer, 10) - passedTime);
       return remainingTime;
     }
-    return 10; // start with 60 for first time
+    return 10;
   });
-  //for clear the timers when screeen renders
+
   useEffect(() => {
     localStorage.clear("resendTimer");
     localStorage.clear("resendTime");
@@ -64,21 +64,18 @@ export const OTPPageResetPassword = () => {
   }, [resendTimer]);
 
   const handleChange = (index, value) => {
-    // Allow only numbers
     if (!/^\d*$/.test(value)) return;
 
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
 
-    //move to next field
     if (value !== "" && index < 5) {
       inputRefs[index + 1].current.focus();
     }
   };
 
   const handleKeyDown = (index, e) => {
-    // for move to back on backspace
     if (e.key === "Backspace" && index > 0 && otp[index] === "") {
       inputRefs[index - 1].current.focus();
     }

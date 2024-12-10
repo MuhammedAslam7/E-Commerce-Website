@@ -17,7 +17,7 @@ import { Edit } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 
-import { useToast } from "@/hooks/use-toast";
+import { useToaster } from "@/utils/Toaster";
 // Importing the API hook
 import {
   useGetAllUsersQuery,
@@ -27,7 +27,7 @@ import { useNavigate } from "react-router-dom";
 import { ConfirmDialog } from "@/components/admin/modals/ConfirmDilalog";
 
 export function UsersPage() {
-  const { toast } = useToast();
+  const toast = useToaster();
   const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const { data, isLoading, error } = useGetAllUsersQuery();
@@ -54,21 +54,21 @@ export function UsersPage() {
           active: !selectedUser.active,
         }).unwrap();
 
-        toast({
-          title: "Success",
-          Description: `User ${
+        toast(
+          "Success",
+          `${selectedUser.username} ${
             selectedUser.active ? "UnBlocked" : "Blocked"
           } successfully.`,
-          variant: "default",
-        });
+          "#22c55e"
+        );
       } catch (error) {
         console.error("Failed to update User status:", error);
 
-        toast({
-          title: "Error",
-          description: "Failed to update category status. Please try again.",
-          variant: "destructive",
-        });
+        toast(
+          "Error",
+          "Failed to update category status. Please try again.",
+          "#ff0000"
+        );
       }
     }
 
@@ -115,13 +115,25 @@ export function UsersPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>USERS</TableHead>
-                    <TableHead>MOBILE</TableHead>
-                    <TableHead>EMAIL</TableHead>
-                    <TableHead>JOINED ON</TableHead>
+                    <TableHead className="text-orange-600 uppercase">
+                      USERS
+                    </TableHead>
+                    <TableHead className="text-orange-600 uppercase">
+                      MOBILE
+                    </TableHead>
+                    <TableHead className="text-orange-600 uppercase">
+                      EMAIL
+                    </TableHead>
+                    <TableHead className="text-orange-600 uppercase">
+                      JOINED ON
+                    </TableHead>
 
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="text-orange-600 uppercase">
+                      Status
+                    </TableHead>
+                    <TableHead className="text-right text-orange-600 uppercase">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

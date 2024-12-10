@@ -17,17 +17,19 @@ import { Plus, Edit } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 
-import { useToast } from "@/hooks/use-toast";
 // Importing the API hook
 import {
   useGetAllBrandsQuery,
   useUpdateBrandStatusMutation,
+  useUpdateBrandMutation,
 } from "@/services/api/admin/adminApi";
 import { useNavigate } from "react-router-dom";
 import { ConfirmDialog } from "@/components/admin/modals/ConfirmDilalog";
+import { EditModal } from "@/components/admin/modals/EditModal";
+import { useToaster } from "@/utils/Toaster";
 
 export function BrandPage() {
-  const { toast } = useToast();
+  const toast = useToaster();
   const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const { data: brands = [], isLoading, error } = useGetAllBrandsQuery();
@@ -37,6 +39,8 @@ export function BrandPage() {
   const [showModal, setShowModal] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState(null);
   const [updateCategoryStatus] = useUpdateBrandStatusMutation();
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [updateBrand] = useUpdateBrandMutation();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
@@ -54,21 +58,21 @@ export function BrandPage() {
           listed: !selectedBrand?.listed,
         }).unwrap();
 
-        toast({
-          title: "Success",
-          Description: `Category ${
+        toast(
+          "Success",
+          `Category ${
             selectedBrand?.listed ? "unlisted" : "listed"
           } successfully.`,
-          variant: "default",
-        });
+          "#22c55e"
+        );
       } catch (error) {
         console.error("Failed to update brand status:", error);
 
-        toast({
-          title: "Error",
-          description: "Failed to update brand status. Please try again.",
-          variant: "destructive",
-        });
+        toast(
+          "Error",
+          "Failed to update brand status. Please try again.",
+          "#ff0000"
+        );
       }
     }
 
@@ -78,6 +82,25 @@ export function BrandPage() {
 
   const cancelToggle = () => {
     setShowModal(false);
+    setSelectedBrand(null);
+  };
+
+  const handleEdit = (brand) => {
+    setSelectedBrand(brand);
+    setShowEditModal(true);
+  };
+  const handleSave = async (data) => {
+    try {
+      await updateBrand({
+        id: selectedBrand._id,
+        ...data,
+      }).unwrap();
+      toast("Success", "Brand Updated Successfully", "#22c55e");
+    } catch (error) {
+      console.error("Failed to update Brand:", error);
+      toast("Error", "Failed to update category. Please try again.", "#ff0000");
+    }
+    setShowEditModal(false);
     setSelectedBrand(null);
   };
 
@@ -91,7 +114,7 @@ export function BrandPage() {
   if (error)
     return (
       <div className="flex items-center justify-center h-screen">
-        Error loading Categories
+        Error loading Brands
       </div>
     );
 
@@ -107,7 +130,7 @@ export function BrandPage() {
         <div className="p-6 space-y-8">
           <div className="flex justify-end items-center">
             <Button
-              onClick={() => navigate("/admin/brands/add-brand")}
+              onClick={() => navigate("/admin/brands/add-brands")}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Plus className="mr-2 h-4 w-4" /> Add Brand
@@ -123,10 +146,16 @@ export function BrandPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Categories</TableHead>
+                    <TableHead className="text-orange-600 uppercase">
+                      Brands
+                    </TableHead>
 
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="text-orange-600 uppercase">
+                      Status
+                    </TableHead>
+                    <TableHead className="text-right text-orange-600 uppercase">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -151,11 +180,7 @@ export function BrandPage() {
                             variant="outline"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() =>
-                              navigate(
-                                `/admin/products/edit-products/${brand._id}`
-                              )
-                            }
+                            onClick={() => handleEdit(brand)}
                           >
                             <Edit className="h-4 w-4" />
                             <span className="sr-only">Edit brand</span>
@@ -187,6 +212,12 @@ export function BrandPage() {
         description={`Are you sure you want to ${
           selectedBrand?.listed ? "unlist" : "list"
         } this brand? This action can be reversed later.`}
+      />
+      <EditModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleSave}
+        initialData={selectedBrand}
       />
     </div>
   );

@@ -20,7 +20,7 @@ const userSlice = createSlice({
       state.isAuthenticated = true;
     },
 
-    userlogOut: (state) => {
+    userLogout: (state) => {
       state.userId = null;
       state.email = null;
       state.role = null;
@@ -30,6 +30,6 @@ const userSlice = createSlice({
   },
 });
 
-export const { setUser, userlogOut } = userSlice.actions;
+export const { setUser, userLogout } = userSlice.actions;
 export default userSlice.reducer;
 export const selectCurrentUser = (state) => state.auth.user;
