@@ -18,7 +18,7 @@ export const ProductListPage = () => {
     <div>
       <NavbarUser />
       <SecondNavbarUser />
-      <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-10 grid grid-cols-1 max-w-7xl m-auto gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {products?.map((product) => (
           <ProductCard
             key={product?._id}

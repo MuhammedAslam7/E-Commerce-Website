@@ -1,6 +1,7 @@
 import express from "express";
 import {
   adminLogout,
+  adminRefreshToken,
   adminSignin,
   confirmPasswordReset,
   googleAuth,
@@ -21,6 +22,7 @@ router.post("/verify-otp", verifyOTP);
 router.post("/resend-otp", resendOTP);
 router.post("/signin", signIn);
 router.get("/refresh-token", refreshToken);
+router.get("/admin-refresh-token", adminRefreshToken);
 router.post("/logout", logout);
 router.post("/reset-password", resetPassword);
 router.post("/reset-verify-otp", resetVerifyOTP);

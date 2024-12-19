@@ -4,6 +4,7 @@ import {
   addVariants,
   editProduct,
   getAllProducts,
+  getBrandAndCategory,
   getProductById,
   updateProductStatus,
 } from "../controllers/productController.js";
@@ -15,5 +16,6 @@ router.get("/all-products", getAllProducts);
 router.patch("/update-status/:id", updateProductStatus);
 router.get("/get-product/:id", getProductById);
 router.put("/edit-product/:id", editProduct);
+router.get("/category-brand", getBrandAndCategory);
 
 export default router;

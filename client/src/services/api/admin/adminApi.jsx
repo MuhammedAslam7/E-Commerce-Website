@@ -14,6 +14,12 @@ export const adminApi = createApi({
       }),
       invalidatesTags: ["Product"],
     }),
+    getCategoryAndBrand: (builder.query({
+      query: () => ({
+      url: "admin/products/category-brand",
+      method: "GET"
+      }),
+    })),
     addVariants: builder.mutation({
       query: ({ productData, productId }) => ({
         url: `admin/products/add-variants/${productId}`,
@@ -133,6 +139,7 @@ export const adminApi = createApi({
 
 export const {
   useGetAllProductsQuery,
+  useGetCategoryAndBrandQuery,
   useUpdateProductStatusMutation,
   useAddProductsMutation,
   useAddVariantsMutation,

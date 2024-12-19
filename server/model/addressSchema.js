@@ -1,7 +1,13 @@
 import mongoose from "mongoose";
 
-export const addressSchema = mongoose.Schema(
+const addressSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
+    
     fullName: {
       type: String,
       required: true,
@@ -35,5 +41,7 @@ export const addressSchema = mongoose.Schema(
       required: true,
     },
   },
-  { timeStamps: true }
+  { timestamps: true } 
 );
+
+export const Address = mongoose.model("Address", addressSchema);

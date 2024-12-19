@@ -14,7 +14,7 @@ import { useDispatch } from "react-redux";
 import { userLogout } from "@/redux/slices/userSlice";
 import { useNavigate } from "react-router-dom";
 
-export const NavbarUser = () => {
+export const NavbarUser = ({ itemsInCart }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [userlogout] = useUserlogoutMutation();
@@ -103,7 +103,7 @@ export const NavbarUser = () => {
                   className="h-6 w-6"
                 />
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                  0
+                  {itemsInCart}
                 </span>
               </div>
             </button>

@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import {
   Heart,
@@ -32,29 +30,41 @@ export function ProductDetailsPage() {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const { id } = useParams();
   const { data: product, isLoading, error } = useProductDetailsQuery(id);
+  const [images, setImages] = useState([]);
+  const [color, setColor] = useState();
+  const [stock, setStock] = useState();
+  const [currentVariant, setCurrentVariant] = useState();
   const [isZoomed, setIsZoomed] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
+  const [addToCart] = useAddToCartMutation();
   const userId = useSelector((state) => state?.user?.userId);
-
-  const images = product?.variants[0]?.images || [];
-
-  const decreaseQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1);
+  useEffect(() => {
+    if (product?.variants?.length > 0) {
+      setImages(product.variants[0].images);
+      setColor(product.variants[0].color);
+      setStock(product.variants[0].stock);
+      setCurrentVariant(0);
     }
-  };
+  }, [product?.variants]);
 
-  const increaseQuantity = () => {
-    setQuantity(quantity + 1);
-  };
+  const variants = product?.variants || [];
+
+  // const decreaseQuantity = () => {
+  //   if (quantity > 1) {
+  //     setQuantity(quantity - 1);
+  //   }
+  // };
+
+  // const increaseQuantity = () => {
+  //   setQuantity(quantity + 1);
+  // };
 
   const nextImage = () => {
-    setCurrentImage((prev) => (prev + 1) % images.length);
+    setCurrentImage((prev) => (prev + 1) % images?.length);
   };
 
   const previousImage = () => {
-    setCurrentImage((prev) => (prev - 1 + images.length) % images.length);
+    setCurrentImage((prev) => (prev - 1 + images?.length) % images?.length);
   };
 
   const toggleWishlist = () => {
@@ -68,16 +78,11 @@ export function ProductDetailsPage() {
     setMousePosition({ x, y });
   };
 
-  useEffect(() => {
-    const timer = setInterval(nextImage, 5000);
-    return () => clearInterval(timer);
-  }, [images.length]);
-
   const handleAddToCart = async () => {
     try {
       const response = await addToCart({
         productId: id,
-        userId,
+        color,
       }).unwrap();
       toast("Success", response?.message, "#22c55e");
     } catch (error) {
@@ -89,6 +94,13 @@ export function ProductDetailsPage() {
         toast("Error", "An Error Occured Please try again later..", "#ff0000");
       }
     }
+  };
+
+  const handleVariantChange = (variant, index) => {
+    setImages(variant?.images);
+    setColor(variant?.color);
+    setStock(variant?.stock);
+    setCurrentVariant(index);
   };
 
   if (isLoading) {
@@ -103,70 +115,87 @@ export function ProductDetailsPage() {
       <NavbarUser />
       <SecondNavbarUser />
 
-      <div className="grid md:grid-cols-2 gap-12 px-4 md:px-8 lg:px-16 xl:px-[220px] mt-10">
+      <div className="grid md:grid-cols-2 max-w-7xl gap-12 mt-7 mx-auto">
         {/* Product Image Carousel */}
-        <Card className="relative overflow-hidden rounded-xl shadow-lg h-[500px]">
-          <CardContent className="p-0">
-            <div className="relative aspect-square overflow-hidden">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentImage}
-                  className="relative w-full h-full"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <img
-                    src={images[currentImage]}
-                    alt={`boAt Rockerz 425 - Image ${currentImage + 1}`}
-                    className="w-full h-full object-cover"
-                    style={{
-                      transformOrigin: `${mousePosition.x}% ${mousePosition.y}%`,
-                      transform: isZoomed ? "scale(2)" : "scale(1)",
-                      transition: "transform 0.2s ease-out",
-                    }}
-                    onMouseEnter={() => setIsZoomed(true)}
-                    onMouseLeave={() => setIsZoomed(false)}
-                    onMouseMove={handleMouseMove}
-                  />
-                </motion.div>
-              </AnimatePresence>
-              <button
-                onClick={previousImage}
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full p-2 shadow-md transition-transform hover:scale-110"
-                aria-label="Previous image"
+        <div className="flex gap-4">
+          <div className="gap-5 flex flex-col">
+            {images?.map((image, index) => (
+              <div
+                key={index}
+                className="w-16 h-16 p-1 border border-blue-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
               >
-                <ChevronLeft className="h-6 w-6 text-gray-800" />
-              </button>
-              <button
-                onClick={nextImage}
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full p-2 shadow-md transition-transform hover:scale-110"
-                aria-label="Next image"
-              >
-                <ChevronRight className="h-6 w-6 text-gray-800" />
-              </button>
-            </div>
-
-            <div className="flex justify-center gap-2 mt-4 pb-4">
-              {images.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentImage(index)}
-                  className={`w-3 h-3 rounded-full transition-all ${
-                    currentImage === index
-                      ? "bg-primary scale-125"
-                      : "bg-gray-300"
-                  }`}
-                  aria-label={`Go to image ${index + 1}`}
+                <img
+                  src={image}
+                  alt={image || `Variant ${index + 1}`}
+                  className="w-full h-full object-cover rounded-lg"
+                  onMouseEnter={() => setCurrentImage(index)}
                 />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            ))}
+          </div>
+          <Card className="relative overflow-hidden rounded-xl w-full shadow-lg h-[550px]">
+            <CardContent className="p-0">
+              <div className="relative aspect-square">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentImage}
+                    className="relative w-full h-full"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.1 }}
+                  >
+                    <img
+                      src={images?.[currentImage]}
+                      alt={`boAt Rockerz 425 - Image ${currentImage + 1}`}
+                      className="w-full h-full object-contain "
+                      style={{
+                        transformOrigin: `${mousePosition.x}% ${mousePosition.y}%`,
+                        transform: isZoomed ? "scale(2)" : "scale(1)",
+                        transition: "transform 0.2s ease-out",
+                      }}
+                      onMouseEnter={() => setIsZoomed(true)}
+                      onMouseLeave={() => setIsZoomed(false)}
+                      onMouseMove={handleMouseMove}
+                    />
+                  </motion.div>
+                </AnimatePresence>
+                <button
+                  onClick={previousImage}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full p-2 shadow-md transition-transform hover:scale-110"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="h-6 w-6 text-gray-800" />
+                </button>
+                <button
+                  onClick={nextImage}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full p-2 shadow-md transition-transform hover:scale-110"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="h-6 w-6 text-gray-800" />
+                </button>
+              </div>
+
+              <div className="flex justify-center gap-2 mt-4 pb-4">
+                {images?.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentImage(index)}
+                    className={`w-3 h-3 rounded-full transition-all ${
+                      currentImage === index
+                        ? "bg-primary scale-125"
+                        : "bg-gray-300"
+                    }`}
+                    aria-label={`Go to image ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Product Details */}
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div className="space-y-1">
             <Badge
               variant="secondary"
@@ -208,7 +237,7 @@ export function ProductDetailsPage() {
             {product?.description}
           </p>
 
-          <div className="space-y-1">
+          {/* <div className="space-y-1">
             <label
               htmlFor="quantity"
               className="block text-xs font-medium text-gray-700"
@@ -241,7 +270,23 @@ export function ProductDetailsPage() {
                 +
               </Button>
             </div>
-          </div>
+          </div> */}
+
+          <p
+            className={
+              stock > 1
+                ? "text-green-600 font-medium"
+                : stock === 1
+                ? "text-yellow-600 font-medium"
+                : "text-red-600 font-medium"
+            }
+          >
+            {stock > 1
+              ? "Item In Stock"
+              : stock === 1
+              ? "Only 1 Item Left"
+              : "Out Of Stock"}
+          </p>
 
           <div className="flex gap-2">
             <Button className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-sm py-1">
@@ -254,6 +299,7 @@ export function ProductDetailsPage() {
                     className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-sm py-1"
                     variant="secondary"
                     onClick={handleAddToCart}
+                    disabled={stock == 0}
                   >
                     <ShoppingCart className="mr-1 h-3 w-3" /> ADD TO CART
                   </Button>
@@ -292,11 +338,44 @@ export function ProductDetailsPage() {
               </span>
             </p>
             <p className="flex justify-between">
+              <span className="font-medium text-gray-600">COLOR:</span>
+              <span className="text-gray-800 font-bold">{color}</span>
+            </p>
+            <p className="flex justify-between">
               <span className="font-medium text-gray-600">WARRANTY:</span>
               <span className="text-gray-800 font-bold">
                 1 Year Manufacturer Warranty
               </span>
             </p>
+          </div>
+
+          <div className="gap-7 flex">
+            {variants?.map((variant, index) => (
+              <div
+                key={index}
+                style={{
+                  border:
+                    currentVariant === index
+                      ? `2px solid ${color}`
+                      : "2px solid gray",
+                }}
+                className={`w-10 h-10 p-1 rounded-lg shadow-md transition-all flex items-center flex-col
+              ${
+                currentVariant === index
+                  ? "shadow-lg scale-110"
+                  : "hover:border-gray-400"
+              }
+            `}
+              >
+                <img
+                  src={variant?.images[0]}
+                  alt={variant || `Variant ${index + 1}`}
+                  className="w-full h-full object-cover rounded-lg"
+                  onClick={() => handleVariantChange(variant, index)}
+                />
+                <p className="mt-1 text-sm font-medium">{variant?.color}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

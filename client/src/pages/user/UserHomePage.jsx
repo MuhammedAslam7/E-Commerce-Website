@@ -17,7 +17,11 @@ export function UserHomePage() {
   console.log(data);
 
   if (isLoading) {
-    return <h3>Home page is loading...</h3>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-gray-900"></div>
+      </div>
+    );
   }
   if (error) {
     return <h3>Erron on loading Home page, please try later..</h3>;
@@ -30,7 +34,7 @@ export function UserHomePage() {
         <img
           src="/banners/c-d-x-HwwQZZdQHtc-unsplash.jpg"
           alt="Hero headphones"
-          className="h-[575px] w-full object-cover"
+          className="h-[605px] w-full object-cover"
         />
         <div className="absolute inset-0 bg-black/40">
           <div className="container flex items-center mx-auto h-full px-4">
@@ -67,7 +71,7 @@ export function UserHomePage() {
           <h2 className="mb-8 text-center text-3xl font-bold text-gray-900">
             Super Saver
           </h2>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 m-auto max-w-7xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {topCard?.map((product) => (
               <ProductCard
                 key={product?._id}
@@ -112,7 +116,7 @@ export function UserHomePage() {
           <h2 className="mb-8 text-center text-3xl font-bold text-gray-900">
             Listen to the Noise
           </h2>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 max-w-7xl m-auto gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {downCard?.map((product) => (
               <ProductCard
                 key={product?._id}

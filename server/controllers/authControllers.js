@@ -178,6 +178,25 @@ export const refreshToken = async (req, res) => {
       .json({ message: "Invalid refresh token", error: error.message });
   }
 };
+export const adminRefreshToken = async (req, res) => {
+  const refreshToken = req.cookies?.adminRefreshToken;
+
+  if (!refreshToken) {
+    return res.status(401).json({ message: "Refresh token not found" });
+  }
+
+  try {
+    const decoded = await jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
+    const user = await User.findById(decoded.userId);
+    const accessToken = createAccessToken(user);
+
+    res.json({ accessToken });
+  } catch (error) {
+    res
+      .status(403)
+      .json({ message: "Invalid refresh token", error: error.message });
+  }
+};
 //////////////////////////////////
 export const logout = (req, res) => {
   try {
@@ -213,7 +232,7 @@ export const adminSignin = async (req, res) => {
 
     res
       .status(200)
-      .cookie("refreshToken", refreshToken, {
+      .cookie("adminRefreshToken", refreshToken, {
         path: "/",
         httpOnly: true,
         secure: true,
@@ -235,7 +254,7 @@ export const adminSignin = async (req, res) => {
 /////////////////////////////////////////
 export const adminLogout = async (req, res) => {
   try {
-    res.clearCookie("refreshToken", {
+    res.clearCookie("adminRefreshToken", {
       httpOnly: true,
       secure: true,
       sameSite: "none",

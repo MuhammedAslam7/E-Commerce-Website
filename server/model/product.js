@@ -27,10 +27,6 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    totalStock: {
-      type: Number,
-      required: true,
-    },
     listed: {
       type: Boolean,
       default: true,

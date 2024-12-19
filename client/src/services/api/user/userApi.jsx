@@ -4,7 +4,14 @@ import { baseQueryWithReauth } from "./baseQueryUser";
 export const userApi = createApi({
   reducerPath: "userApi",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["home", "Cart", "Address", "Profile"],
+  tagTypes: [
+    "home",
+    "Cart",
+    "Address",
+    "Profile",
+    "ProductDetails",
+    "MyOrders",
+  ],
   endpoints: (builder) => ({
     userHome: builder.query({
       query: () => ({
@@ -18,6 +25,7 @@ export const userApi = createApi({
         url: `user/product-details/${id}`,
         method: "GET",
       }),
+      providesTags: ["ProductDetails"],
     }),
     productsList: builder.query({
       query: () => ({
@@ -26,10 +34,10 @@ export const userApi = createApi({
       }),
     }),
     addToCart: builder.mutation({
-      query: ({ productId, userId }) => ({
+      query: ({ productId, color }) => ({
         url: "user/add-to-cart",
         method: "POST",
-        body: { productId, userId },
+        body: { productId, color },
       }),
       invalidatesTags: ["Cart"],
     }),
@@ -40,11 +48,27 @@ export const userApi = createApi({
       }),
       providesTags: ["Cart"],
     }),
+    updateCartQuantity: builder.mutation({
+      query: ({ productId, variantId, newQuantity }) => ({
+        url: "user/update-quantity",
+        method: "PUT",
+        body: { productId, variantId, newQuantity },
+      }),
+      invalidatesTags: ["Cart"],
+    }),
+    removeCartItem: builder.mutation({
+      query: ({ productId, variantId }) => ({
+        url: "user/delete-cartitem",
+        method: "DELETE",
+        body: { productId, variantId },
+      }),
+      invalidatesTags: ["Cart"],
+    }),
+
     addAddress: builder.mutation({
-      query: ({ newAddress, userId }) => ({
+      query: ({ newAddress }) => ({
         url: `user/add-address`,
         method: "POST",
-        params: { userId },
         body: { newAddress },
       }),
       invalidatesTags: ["Address"],
@@ -94,6 +118,44 @@ export const userApi = createApi({
       }),
       invalidatesTags: ["Profile"],
     }),
+    addOrder: builder.mutation({
+      query: ({ addressId, paymentMethod }) => ({
+        url: "user/place-order",
+        method: "POST",
+        body: { addressId, paymentMethod },
+      }),
+      invalidatesTags: ["ProductDetails", "Cart", "MyOrders"],
+    }),
+    myOrders: builder.query({
+      query: () => ({
+        url: "user/my-orders",
+        method: "GET",
+      }),
+      providesTags: ["MyOrders"],
+    }),
+    OrderById: builder.query({
+      query: (id) => ({
+        url: `user/order-details/${id}`,
+        method: "GET"
+      }),
+      providesTags: ["MyOrders"]
+    }),
+    cancelOrder :  builder.mutation({
+      query: (id) => ({
+        url: "user/cancel-order",
+        method: "PATCH",
+        body: {id}
+      }),
+      invalidatesTags: ["MyOrders"]
+    }),
+    cancelItem: builder.mutation({
+      query: ({orderId, itemId}) => ({
+        url: "user/cancel-item",
+        method: "PATCH",
+        body: {orderId, itemId}
+      }),
+      invalidatesTags: ["MyOrders"]
+    })
   }),
 });
 
@@ -103,6 +165,8 @@ export const {
   useProductsListQuery,
   useAddToCartMutation,
   useCartProductsQuery,
+  useUpdateCartQuantityMutation,
+  useRemoveCartItemMutation,
   useAddAddressMutation,
   useUpdateAddressMutation,
   useGetAddressQuery,
@@ -110,4 +174,10 @@ export const {
   useChangePasswordMutation,
   useProfileDataQuery,
   useUpdateProfileMutation,
+  useAddOrderMutation,
+  useMyOrdersQuery,
+  useOrderByIdQuery,
+  useCancelOrderMutation,
+  useCancelItemMutation
+
 } = userApi;

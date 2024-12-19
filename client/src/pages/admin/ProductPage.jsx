@@ -148,7 +148,7 @@ export function ProductPage() {
                         <img
                           src={product?.thumbnailImage}
                           alt={product?.name}
-                          className="w-12 h-12 object-cover rounded-md"
+                          className="w-12 h-12 object-contain rounded-md"
                         />
                       </TableCell>
                       <TableCell className="font-medium">
@@ -157,7 +157,29 @@ export function ProductPage() {
                       <TableCell>{product?.category?.name}</TableCell>
                       <TableCell>{product?.brand?.name}</TableCell>
                       <TableCell>₹ {product?.price.toFixed(2)}</TableCell>
-                      <TableCell>{product?.stock}</TableCell>
+                      <TableCell>
+                        <div className="grid grid-cols-3 gap-y-1 gap-x-0">
+                              {product?.variants?.map((variant, index) => (
+                                
+                                <div
+                                key={index}
+                                className="w-7 h-7 rounded-lg border flex items-center justify-center"
+                                style={{ backgroundColor: variant?.color }}
+                              >
+                                <span
+                                  className={`text-xs px-1 rounded ${
+                                    variant?.color === "white" ? "text-black" : "text-white"
+                                  }`}
+                                >
+                                  {variant.stock}
+                                </span>
+                              </div>
+                                  
+                                
+                              ))}
+                            </div>  
+                      </TableCell>
+
                       <TableCell>
                         <Badge
                           variant={product?.listed ? "success" : "secondary"}

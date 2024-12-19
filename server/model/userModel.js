@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { addressSchema } from "./addressSchema.js";
 
 const userSchema = new mongoose.Schema(
   {
@@ -27,7 +26,6 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
-    addresses: [addressSchema],
   },
   { timestamps: true }
 );

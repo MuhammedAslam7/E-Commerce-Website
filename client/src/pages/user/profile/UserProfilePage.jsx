@@ -51,7 +51,6 @@ export function UserProfilePage() {
 
   const confirmSaveChanges = async () => {
     try {
-      console.log(data);
       await updateProfile(data).unwrap();
       setConfirmModalOpen(false);
       toast("Success", "Profile Details Updated Successfully", "#22c55e");
@@ -72,7 +71,7 @@ export function UserProfilePage() {
       <NavbarUser />
       <SecondNavbarUser />
       <div className="max-w-5xl mx-auto flex mt-8">
-        <SidebarProfile />
+        <SidebarProfile heading="User Profile" />
         <div className="flex-1">
           <Card className="p-6 bg-white rounded-lg shadow-md">
             <div className="mb-6 flex items-center justify-between">

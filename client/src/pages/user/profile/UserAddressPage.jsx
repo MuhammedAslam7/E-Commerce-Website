@@ -17,6 +17,7 @@ import {
   useDeleteAddresssMutation,
 } from "@/services/api/user/userApi";
 import { MdDelete } from "react-icons/md";
+import { FooterUser } from "@/components/user/layouts/FooterUser";
 
 export function UserAddressPage() {
   const toast = useToaster();
@@ -122,8 +123,8 @@ export function UserAddressPage() {
       <NavbarUser />
       <SecondNavbarUser />
       <div className="flex-1 flex justify-center px-4 py-8">
-        <div className="w-full max-w-6xl flex flex-col md:flex-row gap-8">
-          <SidebarProfile />
+        <div className="w-full max-w-5xl flex flex-col md:flex-row gap-8">
+          <SidebarProfile heading="Address Page" />
           <div className="flex-1 space-y-8">
             <div className="grid gap-8 md:grid-cols-[1fr]">
               <Card>
@@ -297,6 +298,7 @@ export function UserAddressPage() {
         title="Edit Address"
         description="Edit your Address details below and save changes."
       />
+      <FooterUser />
     </div>
   );
 }

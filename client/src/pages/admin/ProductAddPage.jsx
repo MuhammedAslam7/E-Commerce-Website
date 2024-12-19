@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { X, Upload } from "lucide-react";
-import { useAddProductsMutation } from "@/services/api/admin/adminApi";
+import { useAddProductsMutation, useGetCategoryAndBrandQuery } from "@/services/api/admin/adminApi";
 
 import { useToaster } from "@/utils/Toaster";
 
@@ -29,6 +29,7 @@ export function ProductAddPage() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [images, setImages] = useState([]);
   const [addProducts, { isLoading }] = useAddProductsMutation();
+  const {data,  isLoading: isGetting} = useGetCategoryAndBrandQuery()
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState(null);
@@ -42,6 +43,8 @@ export function ProductAddPage() {
     brandName: "",
     color: "",
   });
+  const {categories, brands} = data || {}
+
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
@@ -55,7 +58,7 @@ export function ProductAddPage() {
       file,
       preview: URL.createObjectURL(file),
     }));
-    setImages((prevImages) => [...prevImages, ...newImages].slice(0, 5));
+    setImages((prevImages) => [...prevImages, ...newImages]);
   }, []);
 
   const openCropModal = (image, index) => {
@@ -129,6 +132,9 @@ export function ProductAddPage() {
       toast("Error", "Failed to add product. Please try again", "#ff0000");
     }
   };
+  if(isGetting) {
+    return <h1 className="text-3xl font-medium">Loading...</h1>
+  }
 
   return (
     <div className={`flex h-screen ${isDarkMode ? "dark" : ""}`}>
@@ -166,14 +172,21 @@ export function ProductAddPage() {
                         <Label htmlFor="brand" className="text-sm font-medium">
                           Brand
                         </Label>
-                        <Input
-                          id="brand"
-                          name="brandName"
+                        <Select
                           value={formData?.brandName}
-                          onChange={handleInputChange}
-                          placeholder="Enter brand name"
-                          className="mt-1"
-                        />
+                          onValueChange={(value) =>
+                            setFormData({ ...formData, brandName: value })
+                          }
+                        >
+                          <SelectTrigger id="brand" className="mt-1">
+                            <SelectValue placeholder="Select brand" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {brands?.map((brand, index) => (
+                              <SelectItem key={index} value={brand}>{brand}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
 
@@ -244,13 +257,9 @@ export function ProductAddPage() {
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Head Phone">
-                              Head Phone
-                            </SelectItem>
-                            <SelectItem value="Neck Band">Neck Band</SelectItem>
-                            <SelectItem value="Ear Buds">Ear Buds</SelectItem>
-                            <SelectItem value="Speaker">Speaker</SelectItem>
-                            <SelectItem value="Ear Phone">Ear Phone</SelectItem>
+                            {categories?.map((category, index) => (
+                              <SelectItem key={index} value={category}>{category}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>

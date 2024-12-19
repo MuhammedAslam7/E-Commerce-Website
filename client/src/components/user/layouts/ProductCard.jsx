@@ -1,13 +1,12 @@
-import { Heart, Star } from "lucide-react";
+import { useState } from 'react';
+import { Heart, ShoppingCart, Star, Eye } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardFooter,
-  CardHeader,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 
 export const ProductCard = ({
@@ -16,53 +15,118 @@ export const ProductCard = ({
   description,
   price,
   productId,
+  rating = 4.5,
+  reviewCount = 123,
+  isNew = false,
+  discountPercentage = 0,
 }) => {
   const navigate = useNavigate();
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleCardClick = (e) => {
-    e.preventDefault();
-    navigate(`/product-details/${productId}`);
+    if (!e.defaultPrevented) {
+      navigate(`/product-details/${productId}`);
+    }
   };
+
+  const formattedPrice = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(price);
+
+  const discountedPrice = discountPercentage > 0
+    ? new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(price * (1 - discountPercentage / 100))
+    : null;
+
   return (
     <Card
-      className="group relative overflow-hidden transition-all hover:shadow-lg cursor-pointer"
+      className="group relative overflow-hidden transition-all duration-300 hover:shadow-2xl cursor-pointer bg-white rounded-2xl border-0"
       onClick={handleCardClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <CardHeader className="p-0">
-        <div className="aspect-square overflow-hidden">
-          <img
-            src={thumbnailImage}
-            alt={productName}
-            className="h-full w-full object-cover transition-transform group-hover:scale-105"
-          />
+      <div className="relative aspect-square overflow-hidden">
+        <img
+          src={thumbnailImage}
+          alt={productName}
+          className="h-full w-full object-contain transition-transform duration-700 ease-in-out group-hover:scale-110"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {isNew && (
+          <Badge className="absolute top-3 left-3 bg-blue-500 text-white px-3 py-1 text-xs font-semibold uppercase tracking-wider shadow-lg rounded-full">
+            New Arrival
+          </Badge>
+        )}
+        {discountPercentage > 0 && (
+          <Badge className="absolute top-3 right-3 bg-red-500 text-white px-3 py-1 text-xs font-semibold uppercase tracking-wider shadow-lg rounded-full">
+            {discountPercentage}% OFF
+          </Badge>
+        )}
+        <div className={`absolute inset-0 flex items-center justify-center gap-4 transition-all duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+          
+          <Button
+            variant="secondary"
+            size="icon"
+            className="bg-white/90 text-gray-800 hover:bg-white hover:text-pink-600 shadow-lg transition-transform duration-300 hover:scale-110 rounded-full h-12 w-12"
+            onClick={(e) => e.preventDefault()}
+          >
+            <Heart className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="bg-white/90 text-gray-800 hover:bg-white hover:text-green-600 shadow-lg transition-transform duration-300 hover:scale-110 rounded-full h-12 w-12"
+            onClick={handleCardClick}
+          >
+            <Eye className="h-5 w-5" />
+          </Button>
         </div>
-      </CardHeader>
-      <Separator className="my-0" />
+      </div>
       <CardContent className="p-4">
-        <h3 className="font-bold text-lg text-black text-primary">
+        <h3 className="font-bold text-lg text-gray-800 group-hover:text-blue-600 transition-colors duration-300 truncate">
           {productName}
         </h3>
-        <p className="mt-1 text-sm text-gray-600 line-clamp-2">{description}</p>
+        <p className="mt-2 text-sm text-gray-600 line-clamp-2">{description}</p>
         <div className="mt-3 flex items-center space-x-2">
-          <div className="flex items-center"></div>
-          {/* <span className="text-sm text-gray-500">({reviewCount})</span> */}
-        </div>
-        <div className="mt-3 flex items-end justify-between">
-          <div></div>
+          <div className="flex items-center">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`h-4 w-4 ${
+                  i < Math.floor(rating) ? "text-yellow-400 fill-current" : "text-gray-300"
+                }`}
+              />
+            ))}
+          </div>
+          <span className="text-sm text-gray-500">({reviewCount})</span>
         </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <div className="text-">{price}</div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="ml-auto rounded-full hover:bg-pink-50 hover:text-pink-600"
-          aria-label="Add to wishlist"
-        >
-          <Heart className="h-4 w-4 mr-2" />
-          Wishlist
-        </Button>
+      <CardFooter className="p-4 pt-0 flex items-center justify-between">
+        <div className="flex flex-col">
+          {discountedPrice ? (
+            <>
+              <span className="text-2xl font-bold text-red-600">{discountedPrice}</span>
+              <span className="text-sm text-gray-500 line-through">{formattedPrice}</span>
+            </>
+          ) : (
+            <span className="text-2xl font-bold text-gray-900">₹{price}</span>
+          )}
+        </div>
+        <div className={`transition-all duration-300 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full border-blue-500 text-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-300"
+            onClick={handleCardClick}
+          >
+            View Details
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );
 };
+

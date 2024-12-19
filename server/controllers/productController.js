@@ -81,6 +81,7 @@ export const getAllProducts = async (req, res) => {
       .populate("brand");
 
     res.status(200).json(allProducts);
+    
   } catch (error) {
     res.status(500).json({ message: "Error on sending Products" });
   }
@@ -130,3 +131,20 @@ export const editProduct = async (req, res) => {
   console.log(productData);
   return res.status(200).json({ hsd: "fsdf" });
 };
+/////////////////////////////////////////////////////////////////
+export const getBrandAndCategory = async(req, res) => {
+  try {
+    
+    const category = await Category.find({}, {name: 1, _id: 0})
+    const brands = await Brand.find({}, {name: 1, _id: 0})
+
+
+    res.status(200).json({message: "Brands and catagories",
+       categories: category.map((category) => category.name),
+        brands: brands.map((brand) => brand.name)})
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+    
+  }
+}

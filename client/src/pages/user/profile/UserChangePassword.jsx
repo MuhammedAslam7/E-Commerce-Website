@@ -9,6 +9,7 @@ import { SidebarProfile } from "@/components/user/layouts/SidebarProfile";
 import { ConfirmationModal } from "@/components/user/modals/ConfirmationModal";
 import { useToaster } from "@/utils/Toaster";
 import { useChangePasswordMutation } from "@/services/api/user/userApi";
+import { FooterUser } from "@/components/user/layouts/FooterUser";
 
 export function UserChangePassword() {
   const toast = useToaster();
@@ -60,8 +61,8 @@ export function UserChangePassword() {
       <NavbarUser />
       <SecondNavbarUser />
       <div className="flex-1 flex justify-center px-4 py-8">
-        <div className="w-full max-w-4xl flex flex-col md:flex-row gap-8">
-          <SidebarProfile />
+        <div className="w-full max-w-5xl flex flex-col md:flex-row gap-8">
+          <SidebarProfile heading="Password Page" />
           <div className="flex-1 space-y-8">
             <div className="grid gap-8">
               <Card>
@@ -125,6 +126,7 @@ export function UserChangePassword() {
         confirmText="Yes, Change it"
         cancelText="No, Cancel"
       />
+      <FooterUser />
     </div>
   );
 }
