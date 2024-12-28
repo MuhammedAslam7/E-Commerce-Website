@@ -10,6 +10,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ConfirmationModal } from "@/components/user/modals/ConfirmationModal";
 import { useState, useEffect } from "react";
 import { useAddOrderMutation } from "@/services/api/user/userApi";
+import Breadcrumbs from "@/components/user/layouts/Breadcrumbs";
 
 export function PaymentPage() {
   const location = useLocation()
@@ -40,7 +41,12 @@ export function PaymentPage() {
     <div className="container mx-auto">
       <NavbarUser />
       <SecondNavbarUser />
+      <div className="mt-8 ml-[160px]">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Checkout</h1>
+      <Breadcrumbs currentPage='Payment' />
+        </div>
       <div className="container mx-auto p-6 grid md:grid-cols-[750px_1fr] gap-8 max-w-7xl">
+     
         <Card className="p-6">
           <h2 className="text-2xl font-semibold mb-6">
             Payment Options

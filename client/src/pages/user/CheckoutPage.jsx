@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { MapPin, CreditCard, Truck, ChevronRight, Plus, Check } from 'lucide-react';
+import Breadcrumbs from "@/components/user/layouts/Breadcrumbs";
 
 export function CheckoutPage() {
   const toast = useToaster();
@@ -96,13 +97,7 @@ export function CheckoutPage() {
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Checkout</h1>
-          <div className="flex items-center space-x-4 text-sm">
-            <span className="text-gray-400">Cart</span>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-            <span className="font-semibold text-gray-900">Shipping</span>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-400">Payment</span>
-          </div>
+          <Breadcrumbs currentPage='Checkout-page' />
         </div>
         
         <div className="grid lg:grid-cols-3 gap-8">

@@ -197,12 +197,6 @@ export function ProductDetailsPage() {
         {/* Product Details */}
         <div className="space-y-5">
           <div className="space-y-1">
-            <Badge
-              variant="secondary"
-              className="bg-green-100 text-green-800 hover:bg-green-200"
-            >
-              In Stock
-            </Badge>
             <h2 className="text-2xl font-bold text-gray-900">
               {product?.productName}
             </h2>
@@ -272,21 +266,22 @@ export function ProductDetailsPage() {
             </div>
           </div> */}
 
-          <p
-            className={
+          <Badge
+            variant="secondary"
+            className={`${
               stock > 1
-                ? "text-green-600 font-medium"
+                ? "bg-green-100 text-green-800 hover:bg-green-200"
                 : stock === 1
-                ? "text-yellow-600 font-medium"
-                : "text-red-600 font-medium"
-            }
+                ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                : "bg-red-100 text-red-800 hover:bg-red-200"
+            }`}
           >
             {stock > 1
-              ? "Item In Stock"
+              ? "In Stock"
               : stock === 1
-              ? "Only 1 Item Left"
-              : "Out Of Stock"}
-          </p>
+              ? "Only 1 Left"
+              : "Out of Stock"}
+          </Badge>
 
           <div className="flex gap-2">
             <Button className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-sm py-1">

@@ -1,16 +1,53 @@
 import { Cart } from "../model/cart.js";
 import { Product } from "../model/product.js";
-import {Address} from "../model/addressSchema.js"
+import { Address } from "../model/addressSchema.js";
 import User from "../model/userModel.js";
 import bcryptjs from "bcryptjs";
+import { Category } from "../model/category.js";
+import { Brand } from "../model/brand.js";
 
 export const userHome = async (req, res) => {
   try {
-    const products = await Product.find({ listed: true })
-      .sort({ createdAt: -1 })
-      .limit(8)
-      .select("productName description price thumbnailImage images");
+    const products = await Product.aggregate([
+      { $match: { listed: true } },
 
+      {
+        $lookup: {
+          from: "categories",
+          localField: "category",
+          foreignField: "_id",
+          as: "categoryDetails",
+        },
+      },
+      { $unwind: "$categoryDetails" },
+      { $match: { "categoryDetails.listed": true } },
+
+      {
+        $lookup: {
+          from: "brands",
+          localField: "brand",
+          foreignField: "_id",
+          as: "brandDetails",
+        },
+      },
+      { $unwind: "$brandDetails" },
+      { $match: { "brandDetails.listed": true } },
+
+      {
+        $project: {
+          productName: 1,
+          description: 1,
+          price: 1,
+          thumbnailImage: 1,
+          images: 1,
+          createdAt: 1,
+        },
+      },
+
+      { $sort: { createdAt: -1 } },
+
+      { $limit: 8 },
+    ]);
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
@@ -18,25 +55,75 @@ export const userHome = async (req, res) => {
 };
 
 export const productPage = async (req, res) => {
-  try {
-    const products = await Product.find({ listed: true }).sort({
-      createdAt: -1,
-    });
+  const {
+    page = 1,
+    limit = 6,
+    minPrice,
+    maxPrice,
+    categories,
+    brands,
+  } = req.query;
+  const skip = (page - 1) * limit;
 
-    res.status(200).json(products);
+  try {
+    let query = { listed: true };
+
+    if (minPrice && maxPrice) {
+      query.price = { $gte: Number(minPrice), $lte: Number(maxPrice) };
+    }
+
+    if (categories) {
+      const categoryIds = await Category.find({
+        name: { $in: categories.split(",") },
+        listed: true,
+      }).distinct("_id");
+      query.category = { $in: categoryIds };
+    }
+
+    if (brands) {
+      const brandIds = await Brand.find({
+        name: { $in: brands.split(",") },
+        listed: true,
+      }).distinct("_id");
+      query.brand = { $in: brandIds };
+    }
+
+    const products = await Product.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit))
+      .populate({
+        path: 'category',
+        match: { listed: true },
+        select: 'name',
+      })
+      .populate({
+        path: 'brand',
+        match: { listed: true },
+        select: 'name', 
+      });
+      
+      const allProducts = await Product.find()
+
+
+    const totalProducts = await Product.countDocuments(query);
+    const totalPage = Math.ceil(totalProducts / limit);
+    const currentPage = Number(page);
+
+    res.status(200).json({ products, totalPage, totalProducts, currentPage, allProducts });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 //////////////////////////////////////////
 export const addToCart = async (req, res) => {
-  const {userId} = req.user
-  if(!userId) {
-    return res.status(404).json({message: "User is not valid"})
+  const { userId } = req.user;
+  if (!userId) {
+    return res.status(404).json({ message: "User is not valid" });
   }
 
   const { productId, color } = req.body;
-  console.log(productId, color)
+  console.log(productId, color);
 
   try {
     const product = await Product.findById(productId);
@@ -45,34 +132,34 @@ export const addToCart = async (req, res) => {
       return res.status(404).json({ message: "Product Not Found" });
     }
 
-    
     let variant = product.variants.find((v) => v.color === color);
 
     if (variant.stock === 0) {
-      return res.status(409).json({ message: "Selected color is out of stock" });
+      return res
+        .status(409)
+        .json({ message: "Selected color is out of stock" });
     }
-    const variantId = variant._id
-
+    const variantId = variant._id;
 
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
       cart = await new Cart({
         userId,
-        items: [{ productId,variantId,  color }],
+        items: [{ productId, variantId, color }],
         totalPrice: product.price,
       });
     } else {
       let productExist = await cart.items.some(
-        (item) => item.productId.toString() === productId &&
-        item.color === color
+        (item) =>
+          item.productId.toString() === productId && item.color === color
       );
       if (productExist) {
         return res.status(409).json({
           message: "Item is already exist on the cart. Please check Your Cart",
         });
       }
-      cart.items.push({ productId,variantId, color });
+      cart.items.push({ productId, variantId, color });
 
       cart.totalPrice += product.price;
     }
@@ -100,11 +187,13 @@ export const cartItems = async (req, res) => {
     }
 
     const items = await cart.items.map((item) => {
-      const product = item.productId
+      const product = item.productId;
 
-      if(!product) return item
+      if (!product) return item;
 
-      const variant = product.variants.find((variant) => variant._id.toString() == item.variantId.toString())
+      const variant = product.variants.find(
+        (variant) => variant._id.toString() == item.variantId.toString()
+      );
       return {
         productId: product._id,
         productName: product?.productName,
@@ -113,11 +202,9 @@ export const cartItems = async (req, res) => {
         thumbnailImage: product?.thumbnailImage,
         color: item.color,
         quantity: item.quantity,
-        variant: variant || {}
+        variant: variant || {},
       };
-
-    })
-
+    });
 
     res.status(200).json({
       cartId: cart._id,
@@ -127,7 +214,7 @@ export const cartItems = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
-    console.log(error)
+    console.log(error);
   }
 };
 //////////////////////////////////////////////////////////
@@ -151,9 +238,13 @@ export const updateCartQuantity = async (req, res) => {
     if (!productInCart) {
       return res.status(404).json({ message: "Product not found in cart." });
     }
-    const variantInCart = await cart.items.find((item) => item.variantId.toString() == variantId)
+    const variantInCart = await cart.items.find(
+      (item) => item.variantId.toString() == variantId
+    );
     if (!variantInCart) {
-      return res.status(404).json({ message: "This products variant not found in cart." });
+      return res
+        .status(404)
+        .json({ message: "This products variant not found in cart." });
     }
     const product = await Product.findById(productId);
     if (!product) {
@@ -178,8 +269,8 @@ export const deleteCartItem = async (req, res) => {
   if (!userId) {
     return res.status(404).json({ message: "User in not valid" });
   }
-  const { productId, variantId} = req?.body;
-  console.log(productId, variantId)
+  const { productId, variantId } = req?.body;
+  console.log(productId, variantId);
 
   try {
     const cart = await Cart.findOne({ userId });
@@ -232,7 +323,7 @@ export const addAddress = async (req, res) => {
           .json({ message: `Missing required field: ${field}` });
       }
     }
-    const newAddress =  new Address({
+    const newAddress = new Address({
       userId,
       fullName,
       email,
@@ -244,11 +335,10 @@ export const addAddress = async (req, res) => {
       pincode,
     });
 
-    const savedAddress = await newAddress.save()
+    const savedAddress = await newAddress.save();
 
     res.status(200).json({
       message: "Address added successfully",
-
     });
   } catch (error) {
     console.log(error.message);
@@ -263,7 +353,7 @@ export const getAddress = async (req, res) => {
     return res.status(400).json({ message: "User is not valid" });
   }
   try {
-    const addresses = await Address.find({userId})
+    const addresses = await Address.find({}, '-userId -createdAt -updatedAt -__v');
 
     res.status(200).json({
       message: "Address fetched successfully",
@@ -284,7 +374,7 @@ export const updateAddress = async (req, res) => {
 
   try {
     const updatedAddress = await Address.findOneAndUpdate(
-      { _id: id, userId }, 
+      { _id: id, userId },
       {
         $set: {
           fullName: updatedData.fullName,
@@ -301,7 +391,9 @@ export const updateAddress = async (req, res) => {
     );
 
     if (!updatedAddress) {
-      return res.status(404).json({ message: "Address not found or invalid user" });
+      return res
+        .status(404)
+        .json({ message: "Address not found or invalid user" });
     }
 
     res.status(200).json({
@@ -318,10 +410,12 @@ export const deleteAddress = async (req, res) => {
   const { userId } = req.user;
   const { id } = req.body;
   try {
-    const deletedAddress = await Address.findByIdAndDelete({_id: id, userId})
+    const deletedAddress = await Address.findByIdAndDelete({ _id: id, userId });
 
     if (!deletedAddress) {
-      return res.status(404).json({ message: "Address not found or invalid user" });
+      return res
+        .status(404)
+        .json({ message: "Address not found or invalid user" });
     }
 
     res.status(200).json({
@@ -404,3 +498,29 @@ export const updateProfile = async (req, res) => {
     res.status(500).json({ message: "Sever Error" });
   }
 };
+///////////////////////////////////////////////////////////
+export const getBrandCategory = async (req, res) => {
+  try {
+    const category = await Category.find({}, { name: 1, _id: 0 });
+    const brands = await Brand.find({}, { name: 1, _id: 0 });
+
+    res.status(200).json({
+      message: "Brands and catagories",
+      categories: category.map((category) => category.name),
+      brands: brands.map((brand) => brand.name),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+/////////////////////////////////////////////////////////
+export const productsForSearch = async(req, res) => {
+  try {
+    const allProducts = await Product.find({listed: true})
+
+    res.status(200).json({allProducts})
+  } catch (error) {
+    console.log(error)
+    
+  }
+}

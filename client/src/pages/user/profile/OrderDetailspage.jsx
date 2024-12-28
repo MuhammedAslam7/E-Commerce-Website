@@ -110,7 +110,7 @@ export const OrderDetailsPage = () => {
             <CardTitle className="text-2xl font-bold">Order Details</CardTitle>
             <div className="flex space-x-2">
               <Button
-                disabled={order?.orderStatus == "Cancelled"}
+                disabled={order?.orderStatus == "Cancelled" || order?.orderStatus == "Delivered"}
                 onClick={() => setCancelOrderModal(true)}
                 variant="destructive"
                 size="sm"
@@ -128,6 +128,8 @@ export const OrderDetailsPage = () => {
                 <Printer className="mr-2 h-4 w-4" />
                 Print
               </Button>
+
+             {order?.orderStatus == "Delivered" && <Button className="bg-orange-500">Return Order</Button>} 
             </div>
           </CardHeader>
           <CardContent>

@@ -76,14 +76,24 @@ export const addVariants = async (req, res) => {
 
 export const getAllProducts = async (req, res) => {
   try {
+    const { page, limit } = req.query;
+    console.log(page, limit)
+    const skip = (page - 1) * limit;
+
     const allProducts = await Product.find()
+      .skip(skip)
+      .limit(Number(limit))
       .populate("category")
       .populate("brand");
 
-    res.status(200).json(allProducts);
-    
+      const totalProducts = await Product.countDocuments();
+      const totalPage = Math.ceil(totalProducts / limit)
+
+      const currentPage = page
+    res.status(200).json({products: allProducts, totalPage, currentPage, totalProducts});
   } catch (error) {
-    res.status(500).json({ message: "Error on sending Products" });
+    console.log(error)
+    res.status(500).json({ message: error.message });
   }
 };
 ////////////////////////////////////////////////////////////
@@ -126,25 +136,64 @@ export const getProductById = async (req, res) => {
 };
 ///////////////////////////////////////////////////////////////
 export const editProduct = async (req, res) => {
-  const productData = req.body;
-  console.log(req.files);
-  console.log(productData);
-  return res.status(200).json({ hsd: "fsdf" });
-};
-/////////////////////////////////////////////////////////////////
-export const getBrandAndCategory = async(req, res) => {
   try {
+    const {id, formData} = req.body
+    // console.log(formData)
+
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const brand = await Brand.findOne({name: formData.brand})
+
+    if(!brand) {
+      return res.status(404).json({message: "Brand is not found"})
+    }
+    const brandId = brand._id
+    const category = await Category.findOne({name: formData.category})
+    if(!category) {
+      return res.status(404).json({message: "Category is not found"})
+    }
+    const categoryId = category._id
+
+
+    product.productName = formData.productName
+    product.description = formData.description
+    product.price = formData.price
+    product.category = categoryId
+    product.brand = brandId
+    product.variants = formData.variants
+
+    await product.save()
+    res.status(200).json({
+      message: "Product updated successfully",
+      updatedProduct: product,
+    });
     
-    const category = await Category.find({}, {name: 1, _id: 0})
-    const brands = await Brand.find({}, {name: 1, _id: 0})
-
-
-    res.status(200).json({message: "Brands and catagories",
-       categories: category.map((category) => category.name),
-        brands: brands.map((brand) => brand.name)})
-
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error updating product:", error);
+    res.status(500).json({ message: "Internal Server Error", error });
     
   }
-}
+
+ 
+
+};
+/////////////////////////////////////////////////////////////////
+export const getBrandAndCategory = async (req, res) => {
+  try {
+    const category = await Category.find({}, { name: 1, _id: 0 });
+    const brands = await Brand.find({}, { name: 1, _id: 0 });
+
+    res
+      .status(200)
+      .json({
+        message: "Brands and catagories",
+        categories: category.map((category) => category.name),
+        brands: brands.map((brand) => brand.name),
+      });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

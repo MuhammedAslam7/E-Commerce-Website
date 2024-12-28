@@ -4,7 +4,7 @@ import { baseQueryWithReauth } from "./AdminBaseQuery";
 export const adminApi = createApi({
   reducerPath: "adminApi",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["Product", "Category", "Users", "Brand"],
+  tagTypes: ["Product", "Category", "Users", "Brand", "Orders"],
   endpoints: (builder) => ({
     addProducts: builder.mutation({
       query: (productData) => ({
@@ -14,12 +14,12 @@ export const adminApi = createApi({
       }),
       invalidatesTags: ["Product"],
     }),
-    getCategoryAndBrand: (builder.query({
+    getCategoryAndBrand: builder.query({
       query: () => ({
-      url: "admin/products/category-brand",
-      method: "GET"
+        url: "admin/products/category-brand",
+        method: "GET",
       }),
-    })),
+    }),
     addVariants: builder.mutation({
       query: ({ productData, productId }) => ({
         url: `admin/products/add-variants/${productId}`,
@@ -29,8 +29,8 @@ export const adminApi = createApi({
       invalidatesTags: ["Product"],
     }),
     getAllProducts: builder.query({
-      query: () => ({
-        url: "admin/products/all-products",
+      query: ({page, limit}) => ({
+        url: `admin/products/all-products?page=${page}&limit=${limit}`,
         method: "GET",
       }),
       providesTags: ["Product"],
@@ -48,14 +48,15 @@ export const adminApi = createApi({
         url: `admin/products/get-product/${id}`,
         method: "GET",
       }),
-      providesTags: (result, error, id) => [{ type: "Product", id }],
+      providesTags: ["Product"]
     }),
     updateProductById: builder.mutation({
-      query: ({ id, productData }) => ({
+      query: ({ id, formData }) => ({
         url: `admin/products/edit-product/${id}`,
         method: "PUT",
-        body: productData,
+        body: {id, formData}
       }),
+      invalidatesTags:["Product"]
     }),
     addCategories: builder.mutation({
       query: ({ name, description }) => ({
@@ -134,6 +135,36 @@ export const adminApi = createApi({
       }),
       invalidatesTags: ["Brand"],
     }),
+    getAllOrders: builder.query({
+      query: () => ({
+        url: "admin/orders/all-orders",
+        method: "GET",
+      }),
+      providesTags: ["Orders"],
+    }),
+    getOrderById: builder.query({
+      query: (id) => ({
+        url: `admin/orders/order-details/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["Orders"]
+    }),
+    updateOrderStatus: builder.mutation({
+      query: ({orderId, newStatus}) => ({
+        url: "admin/orders/update-order-status",
+        method: "PATCH",
+        body: { orderId, newStatus},
+      }),
+      invalidatesTags: ["Orders", "Product"],
+    }),
+    updateItemStatus: builder.mutation({
+      query: ({itemId, orderId, newStatus}) => ({
+        url: "admin/orders/update-item-status",
+        method: "PATCH",
+        body: {itemId, orderId, newStatus}
+      }),
+      invalidatesTags: ["Orders", "Product"]
+    })
   }),
 });
 
@@ -155,4 +186,8 @@ export const {
   useGetAllBrandsQuery,
   useUpdateBrandStatusMutation,
   useUpdateBrandMutation,
+  useGetAllOrdersQuery,
+  useGetOrderByIdQuery,
+  useUpdateOrderStatusMutation,
+  useUpdateItemStatusMutation
 } = adminApi;

@@ -28,8 +28,8 @@ export const userApi = createApi({
       providesTags: ["ProductDetails"],
     }),
     productsList: builder.query({
-      query: () => ({
-        url: "user/product-page",
+      query: ({ page, limit, minPrice, maxPrice, categories, brands }) => ({
+        url: `user/product-page?page=${page}&limit=${limit}&minPrice=${minPrice}&maxPrice=${maxPrice}&categories=${categories?.join(",")}&brands=${brands?.join(",")}`,
         method: "GET",
       }),
     }),
@@ -155,6 +155,18 @@ export const userApi = createApi({
         body: {orderId, itemId}
       }),
       invalidatesTags: ["MyOrders"]
+    }),
+    getCategoryBrand: builder.query({
+      query: () => ({
+        url: "user/category-brand",
+        method: "GET",
+      }),
+    }),
+    allProductsForSearch: builder.query({
+      query: () => ({
+        url: "user/items-for-search",
+        method: "GET"
+      })
     })
   }),
 });
@@ -178,6 +190,8 @@ export const {
   useMyOrdersQuery,
   useOrderByIdQuery,
   useCancelOrderMutation,
-  useCancelItemMutation
+  useCancelItemMutation,
+  useGetCategoryBrandQuery,
+  useAllProductsForSearchQuery
 
 } = userApi;

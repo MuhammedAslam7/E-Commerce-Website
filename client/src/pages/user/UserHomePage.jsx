@@ -69,7 +69,7 @@ export function UserHomePage() {
       <section className="py-12 bg-gray-100">
         <div className="container mx-auto px-4">
           <h2 className="mb-8 text-center text-3xl font-bold text-gray-900">
-            Super Saver
+            New Arrivals
           </h2>
           <div className="grid grid-cols-1 m-auto max-w-7xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {topCard?.map((product) => (

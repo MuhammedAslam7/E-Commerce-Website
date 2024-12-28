@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { X, Upload } from "lucide-react";
+import { X, Upload, Plus, Minus } from 'lucide-react';
 import {
   useGetProductByIdQuery,
   useUpdateProductByIdMutation,
@@ -41,9 +41,9 @@ export function ProductEditPage() {
     productName: "",
     description: "",
     price: "",
-    totalStock: "",
     category: "",
-    color: "",
+    brand: "",
+    variants: [],
   });
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
@@ -54,15 +54,11 @@ export function ProductEditPage() {
         productName: product.productName || "",
         description: product.description || "",
         price: product.price?.toString() || "",
-        totalStock: product.totalStock?.toString() || "",
-        category: product.category || "", // Added category
-        color: product.variants?.[0]?.color || "",
+        category: product.category?.name || "",
+        brand: product.brand?.name || "",
+        variants: product.variants || [],
       });
-      if (
-        product.variants &&
-        product.variants[0] &&
-        Array.isArray(product.variants[0].images)
-      ) {
+      if (product.variants && product.variants.length > 0) {
         setImages(
           product.variants[0].images.map((url) => ({
             preview: url,
@@ -74,6 +70,7 @@ export function ProductEditPage() {
       }
     }
   }, [product]);
+
   useEffect(() => {
     return () => {
       images.forEach((image) => {
@@ -112,27 +109,28 @@ export function ProductEditPage() {
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+  const handleVariantChange = (index, field, value) => {
+    setFormData((prevData) => {
+      const newVariants = [...prevData.variants];
+      newVariants[index] = { ...newVariants[index], [field]: value };
+      return { ...prevData, variants: newVariants };
+    });
+  }
+  const removeVariant = (index) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      variants: prevData.variants.filter((_, i) => i !== index),
+    }));
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsConfirmModalOpen(true);
   };
   const confirmSubmit = async () => {
     setIsConfirmModalOpen(false);
-    const productData = new FormData();
-    for (const key in formData) {
-      productData.append(key, formData[key]);
-    }
-    const existingImages = images
-      .filter((image) => !image.file)
-      .map((image) => image.preview);
-    productData.append("existingImages", JSON.stringify(existingImages));
-    images
-      .filter((image) => image.file)
-      .forEach((image) => {
-        productData.append(`images`, image.file);
-      });
     try {
-      await updateProduct({ id, productData }).unwrap();
+      console.log(formData)
+      await updateProduct({ id, formData }).unwrap();
       toast({
         title: "Success",
         description: "Product updated successfully!",
@@ -171,12 +169,12 @@ export function ProductEditPage() {
           pageName="EDIT PRODUCT"
         />
         <div className="flex-1 overflow-auto p-6">
-          <Card className="w-full h-full">
+          <Card className="w-full">
             <CardContent className="p-6">
               <form onSubmit={handleSubmit} className="h-full flex flex-col">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow">
-                  <div className="lg:col-span-2 space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid lg:grid-cols-[400px_1fr] gap-6 flex-grow">
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
                       <div>
                         <Label
                           htmlFor="productName"
@@ -208,37 +206,31 @@ export function ProductEditPage() {
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <Label
-                          htmlFor="totalStock"
-                          className="text-sm font-medium"
-                        >
-                          Total Stock
-                        </Label>
-                        <Input
-                          id="totalStock"
-                          type="number"
-                          name="totalStock"
-                          value={formData.totalStock}
-                          onChange={handleInputChange}
-                          placeholder="Enter total stock"
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="color" className="text-sm font-medium">
-                          Color
-                        </Label>
-                        <Input
-                          id="color"
-                          name="color"
-                          value={formData.color}
-                          onChange={handleInputChange}
-                          placeholder="Enter color"
-                          className="mt-1"
-                        />
-                      </div>
+                    <div>
+                      <Label htmlFor="brand" className="text-sm font-medium">
+                        Brand
+                      </Label>
+                      <Input
+                        id="brand"
+                        name="brand"
+                        value={formData.brand}
+                        onChange={handleInputChange}
+                        placeholder="Enter brand"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="category" className="text-sm font-medium">
+                        Category
+                      </Label>
+                      <Input
+                        id="category"
+                        name="category"
+                        value={formData.category}
+                        onChange={handleInputChange}
+                        placeholder="Enter category"
+                        className="mt-1"
+                      />
                     </div>
                     <div>
                       <Label
@@ -257,66 +249,78 @@ export function ProductEditPage() {
                         className="mt-1"
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="category" className="text-sm font-medium">
-                        Category
-                      </Label>
-                      <Input
-                        id="category"
-                        name="category"
-                        value={formData.category.name}
-                        onChange={handleInputChange}
-                        placeholder="Enter category"
-                        className="mt-1"
-                      />
-                    </div>
                   </div>
                   <div className="space-y-6">
-                    <div>
-                      <Label htmlFor="images" className="text-sm font-medium">
-                        Product Images
-                      </Label>
-                      <div className="mt-1 flex items-center justify-center border-2 border-dashed border-gray-600 rounded-lg p-4">
-                        <label
-                          htmlFor="images"
-                          className="cursor-pointer flex flex-col items-center"
-                        >
-                          <Upload className="h-8 w-8 text-gray-400" />
-                          <span className="mt-2 text-sm text-gray-500">
-                            Upload images (max 5)
-                          </span>
-                          <Input
-                            id="images"
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            onChange={(e) => handleImageUpload(e.target.files)}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
-                    </div>
-                    {images.length > 0 && (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
-                        {images.map((image, index) => (
-                          <div key={index} className="relative group">
-                            <img
-                              src={image.preview}
-                              alt={`Product image ${index + 1}`}
-                              className="cursor-pointer w-full h-24 object-cover rounded-md"
-                              onClick={() => openCropModal(image, index)}
-                            />
-                            <button
+                    <div className="grid grid-cols-2 gap-4">
+                      {formData?.variants?.map((variant, index) => (
+                        <div key={index} className="mt-2 p-4 border rounded-md">
+                          <div className="flex justify-between items-center mb-2">
+                            <h4 className="text-lg text-yellow-500 font-semibold">{variant?.color}</h4>
+                            <Button
                               type="button"
-                              onClick={() => removeImage(index)}
-                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => removeVariant(index)}
                             >
-                              <X className="h-3 w-3" />
-                            </button>
+                              <Minus className="h-4 w-4" />
+                            </Button>
                           </div>
-                        ))}
-                      </div>
-                    )}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor={`color-${index}`} className="text-sm font-medium">
+                                Color
+                              </Label>
+                              <Input
+                                id={`color-${index}`}
+                                value={variant.color}
+                                onChange={(e) => handleVariantChange(index, 'color', e.target.value)}
+                                placeholder="Enter color"
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`stock-${index}`} className="text-sm font-medium">
+                                Stock
+                              </Label>
+                              <Input
+                                id={`stock-${index}`}
+                                type="number"
+                                value={variant.stock}
+                                onChange={(e) => handleVariantChange(index, 'stock', parseInt(e.target.value))}
+                                placeholder="Enter stock"
+                                className="mt-1"
+                              />
+                            </div>
+                          </div>
+                          <div className="mt-2">
+                            <Label className="text-sm font-medium">Images</Label>
+                            <div className="grid grid-cols-3 gap-2 mt-1">
+                              {variant.images.map((image, imgIndex) => (
+                                <div key={imgIndex} className="relative group">
+                                  <img
+                                    src={image}
+                                    alt={`Variant ${index + 1} image ${imgIndex + 1}`}
+                                    className="w-full h-24 object-cover rounded-md"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newVariants = [...formData.variants];
+                                      newVariants[index].images = newVariants[index].images.filter((_, i) => i !== imgIndex);
+                                      setFormData({ ...formData, variants: newVariants });
+                                    }}
+                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  
                   </div>
                 </div>
                 <div className="mt-6 flex justify-end space-x-4">
@@ -371,3 +375,4 @@ export function ProductEditPage() {
     </div>
   );
 }
+

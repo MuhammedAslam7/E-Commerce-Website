@@ -21,6 +21,7 @@ import {
 } from "@/services/api/user/userApi";
 import { useNavigate } from "react-router-dom";
 import { useToaster } from "@/utils/Toaster";
+import Breadcrumbs from "@/components/user/layouts/Breadcrumbs";
 
 export const CartPage = () => {
   const toast = useToaster();
@@ -52,7 +53,7 @@ export const CartPage = () => {
       return toast("No stock", "No more stock is availabe", "#f97316");
     }
     setProducts(
-      products.map((product) =>
+      products?.map((product) =>
         product.variant._id === variantId
           ? { ...product, quantity: validQuantity }
           : product
@@ -95,6 +96,7 @@ export const CartPage = () => {
       <NavbarUser />
       <SecondNavbarUser />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <Breadcrumbs currentPage='Cart' />
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">SHOPPING CART</h1>
           {items?.length !== 0 && (
@@ -126,16 +128,16 @@ export const CartPage = () => {
         ) : (
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
-              {products.map((product) => (
+              {products?.map((product) => (
                 <Card
-                  key={product.variant._id}
+                  key={product?.variant?._id}
                   className="overflow-hidden transition-shadow duration-300 hover:shadow-lg"
                 >
                   <CardContent className="p-6">
                     <div className="flex gap-6">
                       <div
                         onClick={() =>
-                          navigate(`/product-details/${product.productId}`)
+                          navigate(`/product-details/${product?.productId}`)
                         }
                         className="w-32 h-32 rounded-lg overflow-hidden bg-gray-100 cursor-pointer"
                       >
@@ -154,7 +156,7 @@ export const CartPage = () => {
                         </p>
                         <div className="flex items-center justify-between">
                           <p className="text-2xl font-bold text-gray-900">
-                            ₹{product?.price.toLocaleString("en-IN")}
+                            ₹{product?.price?.toLocaleString("en-IN")}
                           </p>
                           <p
                             className={

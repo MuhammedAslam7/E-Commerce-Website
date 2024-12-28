@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { SidebarAdmin } from "@/components/admin/layouts/SidebarAdmin";
 import { NavbarAdmin } from "@/components/admin/layouts/NavbarAdmin";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -29,7 +29,21 @@ export function ProductPage() {
   const toast = useToaster();
   const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const { data: products = [], isLoading, error } = useGetAllProductsQuery();
+  const [page, setPage] = useState(1);
+  const [products, setProducts] = useState([])
+  const [totalPage, setTotalPage] = useState()
+  const [currentPage, setCurrentPage] = useState()
+  const [limit] = useState(6);
+  const { data, isLoading, error } = useGetAllProductsQuery({page, limit});
+
+  useEffect(() => {
+  if (data && data.products && data.currentPage && data.totalPage && data.totalProducts) {
+    setProducts(data?.products)
+    setTotalPage(data?.totalPage)
+    setCurrentPage(data?.currentPage)
+  }
+}, [data]);
+
 
   const [showModal, setShowModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -92,10 +106,19 @@ export function ProductPage() {
       </div>
     );
 
+    const handleNextPage = () => {
+      if (page < totalPage) setPage(page + 1);
+    };
+  
+    const handlePreviousPage = () => {
+      if (page > 1) setPage(page - 1);
+    };
+  
+
   return (
     <div className={`flex min-h-screen ${isDarkMode ? "dark" : ""}`}>
       <SidebarAdmin />
-      <main className="flex-1 overflow-auto bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+      <main className="flex-1   ">
         <NavbarAdmin
           isDarkMode={isDarkMode}
           setIsDarkMode={setIsDarkMode}
@@ -168,7 +191,7 @@ export function ProductPage() {
                               >
                                 <span
                                   className={`text-xs px-1 rounded ${
-                                    variant?.color === "white" ? "text-black" : "text-white"
+                                    variant?.color === "White" || variant?.color == "white" ? "text-black" : "text-white"
                                   }`}
                                 >
                                   {variant.stock}
@@ -238,6 +261,25 @@ export function ProductPage() {
               </Table>
             </CardContent>
           </Card>
+          <div className="flex justify-between items-center mt-4">
+            <Button
+              onClick={handlePreviousPage}
+              disabled={page === 1}
+              className="bg-gray-500 text-white hover:bg-gray-600"
+            >
+              Previous
+            </Button>
+            <span>
+              Page {currentPage} of {totalPage}
+            </span>
+            <Button
+              onClick={handleNextPage}
+              disabled={page === totalPage}
+              className="bg-gray-500 text-white hover:bg-gray-600"
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </main>
 

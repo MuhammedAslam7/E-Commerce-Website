@@ -32,6 +32,8 @@ import { PaymentPage } from "./pages/user/PaymentPage";
 import { OrderSuccessPage } from "./pages/user/OrderSuccessPage";
 import { OrdersPage } from "./pages/user/profile/OrdersPage";
 import { OrderDetailsPage } from "./pages/user/profile/OrderDetailspage";
+import { OrdersListPage } from "./pages/admin/OrdersListPage";
+import { OrderManagePage } from "./pages/admin/OrderManagePage";
 
 const App = () => {
   return (
@@ -67,8 +69,11 @@ const App = () => {
           <Route path="/checkout-page" element={<CheckoutPage />} />
           <Route path="/payment-page" element={<PaymentPage />} />
           <Route path="/order-success-page" element={<OrderSuccessPage />} />
-          <Route path="/my-orders" element={<OrdersPage/>} />
-          <Route path="/order-details/:orderId" element={<OrderDetailsPage/>} />
+          <Route path="/my-orders" element={<OrdersPage />} />
+          <Route
+            path="/order-details/:orderId"
+            element={<OrderDetailsPage />}
+          />
         </Route>
 
         {/* Admin Protected Routes */}
@@ -95,6 +100,8 @@ const App = () => {
             path="/admin/products/add-variants/:productId"
             element={<ProductsVariantsAddPage />}
           />
+          <Route path="/admin/orders" element={<OrdersListPage />} />
+          <Route path="/admin/orders/order-manage/:orderId" element={<OrderManagePage />} />
         </Route>
       </Routes>
     </BrowserRouter>

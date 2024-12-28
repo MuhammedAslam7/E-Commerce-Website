@@ -20,7 +20,7 @@ const navItems = [
   { icon: Grid, label: "Categories", href: "/admin/category" },
   { icon: Tag, label: "Brands", href: "/admin/brands" },
   { icon: Users, label: "Users", href: "/admin/users" },
-  { icon: ShoppingCart, label: "Orders", href: "#" },
+  { icon: ShoppingCart, label: "Orders", href: "/admin/orders" },
   { icon: Truck, label: "Shipping", href: "#" },
   { icon: DollarSign, label: "Transactions", href: "#" },
   { icon: Star, label: "Reviews", href: "#" },

@@ -3,7 +3,208 @@ import { Cart } from "../model/cart.js";
 import { Order } from "../model/orderSchema.js";
 import { Product } from "../model/product.js";
 import User from "../model/userModel.js";
+////////////////////////////////////////////////////////////
+//admin
+export const allOrders = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .sort({ createdAt: -1 })
+      .populate("userId")
+      .populate("addressId")
+      .populate("products.productId");
 
+    const allOrders = await Promise.all(
+      orders.map(async (order) => {
+        const productsWithVariants = await Promise.all(
+          order.products.map(async (product) => {
+            const fullProduct = await Product.findById(product.productId);
+            const variant = fullProduct.variants.id(product.variantId);
+
+            return {
+              productId: product.productId._id,
+              productName: product.productId.productName,
+              price: product.productId.price,
+              quantity: product.quantity,
+              itemStatus: product.itemStatus,
+              itemId: product._id,
+              variant: variant
+                ? {
+                    color: variant.color,
+                    images: variant.images,
+                  }
+                : null,
+            };
+          })
+        );
+        return {
+          orderId: order._id,
+          paymentMethod: order.paymentMethod,
+          payableAmount: order.payableAmount,
+          orderAt: order.orderAt,
+          orderStatus: order.orderStatus,
+          products: productsWithVariants,
+          address: {
+            fullName: order.addressId.fullName,
+            email: order.addressId.email,
+            phone: order.addressId.phone,
+            country: order.addressId.country,
+            state: order.addressId.state,
+            city: order.addressId.city,
+            landMark: order.addressId.landMark,
+            pincode: order.addressId.pincode,
+          },
+        };
+      })
+    );
+    res.status(200).json({ orders: allOrders });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server Error" });
+  }
+};
+/////////////////////////////////////////////////////////////////
+export const orderDetailsById = async (req, res) => {
+  const { id } = req.params;
+  console.log(id);
+
+  try {
+    const order = await Order.findOne({ _id: id })
+      .populate("addressId")
+      .populate("products.productId")
+      .exec();
+
+    if (!order) {
+      res.status(404).json({ message: "The Order is not exist" });
+    }
+
+    const uniqueStatuses = [...new Set(order.products.map((product) => product.itemStatus))];
+
+    for(let status of uniqueStatuses) {
+      const isCommon =  order.products.every((product) => product.itemStatus == status)
+      if(isCommon) {
+        order.orderStatus = status
+        await order.save()
+        break
+  
+      }
+    }
+
+
+
+    const productsWithVariants = await Promise.all(
+      order.products.map(async (product) => {
+        const fullProduct = await Product.findById(product.productId);
+        const variant = fullProduct.variants.id(product.variantId);
+
+        return {
+          productId: product.productId._id,
+          productName: product.productId.productName,
+          price: product.productId.price,
+          quantity: product.quantity,
+          itemStatus: product.itemStatus,
+          itemId: product._id,
+          variant: variant
+            ? {
+                color: variant.color,
+                images: variant.images,
+              }
+            : null,
+        };
+      })
+    );
+
+    const detailedOrder = {
+      orderId: order._id,
+      paymentMethod: order.paymentMethod,
+      payableAmount: order.payableAmount,
+      products: productsWithVariants,
+      orderAt: order.orderAt,
+      orderStatus: order.orderStatus,
+      address: {
+        fullName: order.addressId.fullName,
+        email: order.addressId.email,
+        phone: order.addressId.phone,
+        country: order.addressId.country,
+        state: order.addressId.state,
+        city: order.addressId.city,
+        landMark: order.addressId.landMark,
+        pincode: order.addressId.pincode,
+      },
+    };
+    console.log(detailedOrder);
+    res.status(200).json({ order: detailedOrder });
+  } catch (error) {
+    console.log(error);
+  }
+};
+//////////////////////////////////////////////////////////////////////
+export const updateOrderStatus = async (req, res) => {
+  const { orderId, newStatus } = req.body;
+
+  try {
+    const order = await Order.updateOne(
+      { _id: orderId },
+      { $set: { orderStatus: newStatus }}
+    );
+
+    if (!order) {
+      res.status(404).json({ message: "Order not found" });
+    }
+    // if(newStatus == "Cancelled") {
+    //   const currentOrder = await Order.findById(orderId)
+
+    //   await Promise.all(
+    //     currentOrder.products.map(async(product) => {
+    //       const fullProduct = await Product.findById(product.productId)
+    //       const variant = fullProduct.variants.id(product.variantId)
+
+    //       if(variant) {
+    //         variant.quantity += product.quantity
+
+    //         await fullProduct.save()
+    //       }
+    //     })
+    //   )
+    // }
+    res.status(200).json(order);
+  } catch (error) {}
+};
+///////////////////////////////////////////////////////
+export const updateItemStatus = async (req, res) => {
+  const { itemId, orderId, newStatus } = req.body;
+  console.log(itemId, orderId);
+
+  try {
+    const updatedOne = await Order.findOneAndUpdate(
+      { _id: orderId, "products._id": itemId },
+      { $set: { "products.$.itemStatus": newStatus } }
+    );
+    if(!updateItemStatus) {
+      return res.status(404).json({mesage: "Order not found"})
+    }
+    if(newStatus == "Cancelled") {
+      console.log("canceled")
+      const currentOrder = await Order.findById(orderId)
+      const currentItem = currentOrder.products.id(itemId)
+      const currentProduct = await Product.findOne({_id: currentItem.productId})
+      const currentVariant = currentProduct.variants.id(currentItem.variantId)
+
+      currentVariant.stock += currentItem.quantity
+
+      await currentProduct.save()
+
+    }
+
+    res.status(200).json(updatedOne)
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({message: "Internal server error"})
+  }
+};
+
+//user
+//////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
 export const placeOrder = async (req, res) => {
   const { userId } = req.user;
   if (!userId) {
@@ -158,7 +359,6 @@ export const orderDetails = async (req, res) => {
   }
   const { id } = req.params;
   console.log(id);
-
   try {
     const order = await Order.findOne({ _id: id, userId })
       .populate("addressId")
@@ -168,11 +368,13 @@ export const orderDetails = async (req, res) => {
     if (!order) {
       res.status(404).json({ message: "The Order is not exist" });
     }
-    
-    const allCancelled = await order.products.every(product => product.itemStatus == "Cancelled")
-    if(allCancelled) {
-      order.orderStatus = "Cancelled"
-      await order.save()
+
+    const allCancelled = await order.products.every(
+      (product) => product.itemStatus == "Cancelled"
+    );
+    if (allCancelled) {
+      order.orderStatus = "Cancelled";
+      await order.save();
     }
 
     const productsWithVariants = await Promise.all(
@@ -216,7 +418,6 @@ export const orderDetails = async (req, res) => {
       },
     };
 
-
     res.status(200).json({ order: detailedOrder });
   } catch (error) {
     console.log(error);
@@ -230,8 +431,21 @@ export const cancelOrder = async (req, res) => {
     return res.status(404).json({ message: "User is not valid" });
   }
   const { id } = req.body;
-
   try {
+   
+    const currentOrder = await Order.findById(id)
+
+    await Promise.all(
+      currentOrder.products.map(async (product) => {
+        const fullProduct = await Product.findById(product.productId);
+        const variant = fullProduct.variants.id(product.variantId);
+    
+        if (variant && product.itemStatus !== "Cancelled") {
+          variant.stock += product.quantity;
+          await fullProduct.save();
+        }
+      })
+    );
     const order = await Order.updateOne(
       { _id: id },
       {
@@ -244,6 +458,9 @@ export const cancelOrder = async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: "Order not existed" });
     }
+
+
+   
     res.status(200).json({ message: "Order cancelled Successfully", order });
   } catch (error) {
     console.log(error);
@@ -259,17 +476,34 @@ export const cancelItem = async (req, res) => {
   const { orderId, itemId } = req.body;
 
   try {
-    const updatedItem = await Order.findOneAndUpdate({
-      _id: orderId,
-      "products._id": itemId,
-    }, {$set: {"products.$.itemStatus" : "Cancelled"}}, {new: true});
+    const updatedItem = await Order.findOneAndUpdate(
+      {
+        _id: orderId,
+        "products._id": itemId,
+      },
+      { $set: { "products.$.itemStatus": "Cancelled" } },
+      { new: true }
+    );
 
-    if(!updatedItem) {
-      return res.status(404).json({message: "Unable to cancel the item"})
+    if (!updatedItem) {
+      return res.status(404).json({ message: "Unable to cancel the item" });
     }
 
-    res.status(200).json(updatedItem)
+
+    
+      const currentOrder = await Order.findById(orderId)
+      const currentItem = currentOrder.products.id(itemId)
+      const currentProduct = await Product.findOne({_id: currentItem.productId})
+      const currentVariant = currentProduct.variants.id(currentItem.variantId)
+
+      currentVariant.stock += currentItem.quantity
+
+      await currentProduct.save()
+
+    
+
+    res.status(200).json(updatedItem);
   } catch (error) {
-    res.status(500).json({message: "Internal sever error"})
+    res.status(500).json({ message: "Internal sever error" });
   }
 };

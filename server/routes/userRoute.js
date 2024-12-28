@@ -7,7 +7,9 @@ import {
   deleteAddress,
   deleteCartItem,
   getAddress,
+  getBrandCategory,
   productPage,
+  productsForSearch,
   profileDetails,
   updateAddress,
   updateCartQuantity,
@@ -26,6 +28,8 @@ router.post("/add-to-cart", verifyToken, addToCart);
 router.get("/cart", verifyToken, cartItems);
 router.put("/update-quantity", verifyToken, updateCartQuantity);
 router.delete("/delete-cartitem", verifyToken, deleteCartItem);
+router.get("/category-brand", verifyToken, getBrandCategory);
+router.get("/items-for-search", verifyToken, productsForSearch);
 
 router.post("/add-address", verifyToken, addAddress);
 router.get("/address", verifyToken, getAddress);

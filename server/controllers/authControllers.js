@@ -392,7 +392,7 @@ export const googleAuth = async (req, res) => {
           httpOnly: true,
           sameSite: "none",
           secure: true,
-          maxAge: 60 * 60 * 24 * 1000, // 1 day
+          maxAge: 60 * 60 * 24 * 1000, 
         })
         .json({
           success: true,
