@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, useCallback } from "react";
 import { SidebarAdmin } from "@/components/admin/layouts/SidebarAdmin";
 import { NavbarAdmin } from "@/components/admin/layouts/NavbarAdmin";

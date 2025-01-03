@@ -119,10 +119,10 @@ export const userApi = createApi({
       invalidatesTags: ["Profile"],
     }),
     addOrder: builder.mutation({
-      query: ({ addressId, paymentMethod }) => ({
+      query: ({ addressId, paymentMethod, totalPrice }) => ({
         url: "user/place-order",
         method: "POST",
-        body: { addressId, paymentMethod },
+        body: { addressId, paymentMethod, totalPrice },
       }),
       invalidatesTags: ["ProductDetails", "Cart", "MyOrders"],
     }),
@@ -167,6 +167,13 @@ export const userApi = createApi({
         url: "user/items-for-search",
         method: "GET"
       })
+    }),
+    razorpayPayment: builder.mutation({
+      query: ({addressId, paymentMethod, razorpayPaymentId, razorpayOrderId, razorpaySignature})=> ({
+        url: "user/razorpay-payment",
+        method: "POST",
+        body: {addressId, paymentMethod, razorpayPaymentId, razorpayOrderId, razorpaySignature}
+      })
     })
   }),
 });
@@ -192,6 +199,7 @@ export const {
   useCancelOrderMutation,
   useCancelItemMutation,
   useGetCategoryBrandQuery,
-  useAllProductsForSearchQuery
+  useAllProductsForSearchQuery,
+  useRazorpayPaymentMutation
 
 } = userApi;

@@ -18,7 +18,7 @@ import {
 } from "../controllers/userController.js";
 import { verifyRole, verifyToken } from "../middewares/jwt-verify.js";
 import { getProductById } from "../controllers/productController.js";
-import { cancelItem, cancelOrder, myOrders, orderDetails, placeOrder } from "../controllers/orderControllers.js";
+import { cancelItem, cancelOrder, myOrders, orderDetails, placeOrder, razorPayPayment } from "../controllers/orderControllers.js";
 const router = express.Router();
 
 router.get("/home", verifyToken, userHome);
@@ -44,5 +44,8 @@ router.get("/my-orders", verifyToken, myOrders)
 router.get("/order-details/:id", verifyToken, orderDetails)
 router.patch("/cancel-order", verifyToken, cancelOrder)
 router.patch("/cancel-item", verifyToken, cancelItem)
+
+
+router.post("/razorpay-payment", verifyToken, razorPayPayment )
 
 export default router;

@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { BiSolidOffer } from "react-icons/bi"
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -12,6 +13,7 @@ import {
   FileText,
   Grid,
   Tag,
+
 } from "lucide-react";
 
 const navItems = [
@@ -21,12 +23,13 @@ const navItems = [
   { icon: Tag, label: "Brands", href: "/admin/brands" },
   { icon: Users, label: "Users", href: "/admin/users" },
   { icon: ShoppingCart, label: "Orders", href: "/admin/orders" },
-  { icon: Truck, label: "Shipping", href: "#" },
-  { icon: DollarSign, label: "Transactions", href: "#" },
+  { icon: BiSolidOffer, label: "Offers", href: "/admin/offers" },
+  { icon: DollarSign, label: "Transactions", href: "" },
   { icon: Star, label: "Reviews", href: "#" },
 ];
 
 export function SidebarAdmin() {
+  const navigate = useNavigate()
   return (
     <aside className="w-64 bg-white dark:bg-gray-800 transition-colors duration-300 shadow-lg">
       <div className="flex flex-col h-full">
@@ -51,7 +54,7 @@ export function SidebarAdmin() {
               </span>
             </Link>
           ))}
-          <Button className="w-full mt-4" variant="outline">
+          <Button onClick={() => navigate("/admin/sales-report")} className="w-full mt-4" variant="outline">
             <FileText className="mr-2 h-4 w-4" />
             Sales Report
           </Button>

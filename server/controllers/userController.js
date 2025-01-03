@@ -353,7 +353,7 @@ export const getAddress = async (req, res) => {
     return res.status(400).json({ message: "User is not valid" });
   }
   try {
-    const addresses = await Address.find({}, '-userId -createdAt -updatedAt -__v');
+    const addresses = await Address.find({userId}, '-userId -createdAt -updatedAt -__v');
 
     res.status(200).json({
       message: "Address fetched successfully",
