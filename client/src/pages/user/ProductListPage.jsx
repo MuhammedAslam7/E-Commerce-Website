@@ -61,6 +61,7 @@ export const ProductListPage = () => {
                 description={product?.description}
                 price={product?.price}
                 thumbnailImage={product?.thumbnailImage}
+                discountedPrice={product?.discountedPrice}
               />
             ))}
           </div>

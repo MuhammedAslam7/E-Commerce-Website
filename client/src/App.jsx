@@ -4,7 +4,6 @@ import { OTPPage } from "./pages/user/OTPPage";
 import { UserSignupPage } from "./pages/user/UserSignupPage";
 import { UserProtectedRoute } from "./utils/UserProtectedRoute";
 import { AdminProtectedRoute } from "./utils/AdminProtectedRoute";
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AdminLogin } from "./pages/admin/AdminLogin";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
@@ -34,6 +33,11 @@ import { OrdersPage } from "./pages/user/profile/OrdersPage";
 import { OrderDetailsPage } from "./pages/user/profile/OrderDetailspage";
 import { OrdersListPage } from "./pages/admin/OrdersListPage";
 import { OrderManagePage } from "./pages/admin/OrderManagePage";
+import { OfferPage } from "./pages/admin/OfferPage";
+import { OfferAddPage } from "./pages/admin/OfferAddPage";
+import { SalesReportPage } from "./pages/admin/SalesReportPage";
+import { WishListPage } from "./pages/user/WishListPage";
+import { WalletPage } from "./pages/user/profile/WalletPage";
 
 const App = () => {
   return (
@@ -74,6 +78,14 @@ const App = () => {
             path="/order-details/:orderId"
             element={<OrderDetailsPage />}
           />
+          <Route
+            path="/wishlist"
+            element={<WishListPage />}
+          />
+          <Route
+            path="/wallet"
+            element={<WalletPage />}
+          />
         </Route>
 
         {/* Admin Protected Routes */}
@@ -102,6 +114,9 @@ const App = () => {
           />
           <Route path="/admin/orders" element={<OrdersListPage />} />
           <Route path="/admin/orders/order-manage/:orderId" element={<OrderManagePage />} />
+          <Route path="/admin/offers" element={<OfferPage />} />
+          <Route path="/admin/offers/add-offer" element={<OfferAddPage />} />
+          <Route path="/admin/sales-report" element={<SalesReportPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

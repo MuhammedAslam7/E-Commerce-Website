@@ -1,5 +1,5 @@
 import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { adminLogout } from "@/redux/slices/adminSlice";
+import { adminLogout } from "@/redux/slices/AdminSlice";
 
 const baseQuery = fetchBaseQuery({
   baseUrl: `${import.meta.env.VITE_API_BASE_URL}/api`,

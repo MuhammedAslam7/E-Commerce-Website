@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAddAddressMutation, useGetAddressQuery } from "@/services/api/user/userApi";
+import {
+  useAddAddressMutation,
+  useGetAddressQuery,
+} from "@/services/api/user/userApi";
 import { useToaster } from "@/utils/Toaster";
 import { NavbarUser } from "@/components/user/layouts/NavbarUser";
 import { SecondNavbarUser } from "@/components/user/layouts/SecondNavbarUser";
@@ -11,7 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { MapPin, CreditCard, Truck, ChevronRight, Plus, Check } from 'lucide-react';
+import {
+  MapPin,
+  CreditCard,
+  Truck,
+  ChevronRight,
+  Plus,
+  Check,
+} from "lucide-react";
 import Breadcrumbs from "@/components/user/layouts/Breadcrumbs";
 
 export function CheckoutPage() {
@@ -20,8 +30,11 @@ export function CheckoutPage() {
   const navigate = useNavigate();
   const [addAddress, { isLoading: isAdding }] = useAddAddressMutation();
   const { data: response = {}, isLoading } = useGetAddressQuery();
-  const [selectedAddress, setSelectedAddress] = useState(response?.addresses?.[0]);
+  const [selectedAddress, setSelectedAddress] = useState(
+    response?.addresses?.[0]
+  );
   const totalPrice = location?.state?.totalPrice;
+  const totalDiscount = location?.state?.totalDiscount;
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
 
@@ -35,8 +48,14 @@ export function CheckoutPage() {
 
   const validationSchema = yup.object({
     fullName: yup.string().required("Full Name is required"),
-    email: yup.string().email("Invalid Email Address").required("Email is required"),
-    phone: yup.string().matches(/^\d{10}$/, "Phone number must be 10 digits").required("Phone number is required"),
+    email: yup
+      .string()
+      .email("Invalid Email Address")
+      .required("Email is required"),
+    phone: yup
+      .string()
+      .matches(/^\d{10}$/, "Phone number must be 10 digits")
+      .required("Phone number is required"),
     country: yup.string().required("Country is required"),
     state: yup.string().required("State is required"),
     pincode: yup.string().required("Pincode is required"),
@@ -58,7 +77,6 @@ export function CheckoutPage() {
     validationSchema: validationSchema,
     onSubmit: async (values, { resetForm }) => {
       try {
-        
         await addAddress({ newAddress: values }).unwrap();
         resetForm();
         setShowNewAddressForm(false);
@@ -75,12 +93,16 @@ export function CheckoutPage() {
     setSelectedAddress(response?.addresses?.[index]);
   };
 
-  const handleProceed = async() => {
-    if(!selectedAddress) {
-      return toast("No Address", "Add a address to deliver the product", "#f97316")
+  const handleProceed = async () => {
+    if (!selectedAddress) {
+      return toast(
+        "No Address",
+        "Add a address to deliver the product",
+        "#f97316"
+      );
     }
-    navigate("/payment-page", { state: { selectedAddress, totalPrice } })
-  }
+    navigate("/payment-page", { state: { selectedAddress, totalPrice, totalDiscount } });
+  };
 
   if (isLoading) {
     return (
@@ -97,9 +119,9 @@ export function CheckoutPage() {
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Checkout</h1>
-          <Breadcrumbs currentPage='Checkout-page' />
+          <Breadcrumbs currentPage="Checkout-page" />
         </div>
-        
+
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
             <section className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -111,23 +133,43 @@ export function CheckoutPage() {
               </div>
               <div className="p-6">
                 {response?.addresses?.length === 0 ? (
-                  <p className="text-gray-600">No addresses found. Please add a new address.</p>
+                  <p className="text-gray-600">
+                    No addresses found. Please add a new address.
+                  </p>
                 ) : (
-                  <RadioGroup value={selectedIndex.toString()} onValueChange={(value) => handleSelectAddress(parseInt(value))}>
+                  <RadioGroup
+                    value={selectedIndex.toString()}
+                    onValueChange={(value) =>
+                      handleSelectAddress(parseInt(value))
+                    }
+                  >
                     <div className="space-y-4">
                       {response?.addresses?.map((address, index) => (
-                        <div key={address?._id} className="flex items-center space-x-3">
-                          <RadioGroupItem value={index.toString()} id={`address-${index}`} />
+                        <div
+                          key={address?._id}
+                          className="flex items-center space-x-3"
+                        >
+                          <RadioGroupItem
+                            value={index.toString()}
+                            id={`address-${index}`}
+                          />
                           <Label
                             htmlFor={`address-${index}`}
                             className="flex flex-col cursor-pointer p-4 rounded-lg border border-gray-200 w-full transition-all duration-200 ease-in-out hover:border-gray-400"
                           >
-                            <span className="font-semibold text-gray-900">{address?.fullName}</span>
-                            <span className="text-sm text-gray-600">{address?.phone}</span>
-                            <span className="text-sm text-gray-600">
-                              {address?.city}, {address?.state}, {address?.country} - {address?.pincode}
+                            <span className="font-semibold text-gray-900">
+                              {address?.fullName}
                             </span>
-                            <span className="text-sm text-gray-500 mt-1">Landmark: {address?.landMark}</span>
+                            <span className="text-sm text-gray-600">
+                              {address?.phone}
+                            </span>
+                            <span className="text-sm text-gray-600">
+                              {address?.city}, {address?.state},{" "}
+                              {address?.country} - {address?.pincode}
+                            </span>
+                            <span className="text-sm text-gray-500 mt-1">
+                              Landmark: {address?.landMark}
+                            </span>
                           </Label>
                         </div>
                       ))}
@@ -143,7 +185,7 @@ export function CheckoutPage() {
                 </Button>
               </div>
             </section>
-            
+
             {showNewAddressForm && (
               <section className="bg-white rounded-lg shadow-sm overflow-hidden">
                 <div className="bg-gray-100 p-4 border-b">
@@ -156,7 +198,12 @@ export function CheckoutPage() {
                   <form onSubmit={formik.handleSubmit} className="space-y-6">
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
-                        <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">Full Name</Label>
+                        <Label
+                          htmlFor="fullName"
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          Full Name
+                        </Label>
                         <Input
                           id="fullName"
                           name="fullName"
@@ -165,11 +212,18 @@ export function CheckoutPage() {
                           className="mt-1"
                         />
                         {formik.touched.fullName && formik.errors.fullName && (
-                          <p className="text-red-500 text-xs mt-1">{formik.errors.fullName}</p>
+                          <p className="text-red-500 text-xs mt-1">
+                            {formik.errors.fullName}
+                          </p>
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email</Label>
+                        <Label
+                          htmlFor="email"
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          Email
+                        </Label>
                         <Input
                           id="email"
                           name="email"
@@ -179,11 +233,18 @@ export function CheckoutPage() {
                           className="mt-1"
                         />
                         {formik.touched.email && formik.errors.email && (
-                          <p className="text-red-500 text-xs mt-1">{formik.errors.email}</p>
+                          <p className="text-red-500 text-xs mt-1">
+                            {formik.errors.email}
+                          </p>
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="phone" className="text-sm font-medium text-gray-700">Phone</Label>
+                        <Label
+                          htmlFor="phone"
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          Phone
+                        </Label>
                         <Input
                           id="phone"
                           name="phone"
@@ -193,11 +254,18 @@ export function CheckoutPage() {
                           className="mt-1"
                         />
                         {formik.touched.phone && formik.errors.phone && (
-                          <p className="text-red-500 text-xs mt-1">{formik.errors.phone}</p>
+                          <p className="text-red-500 text-xs mt-1">
+                            {formik.errors.phone}
+                          </p>
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="country" className="text-sm font-medium text-gray-700">Country</Label>
+                        <Label
+                          htmlFor="country"
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          Country
+                        </Label>
                         <Input
                           id="country"
                           name="country"
@@ -206,11 +274,18 @@ export function CheckoutPage() {
                           className="mt-1"
                         />
                         {formik.touched.country && formik.errors.country && (
-                          <p className="text-red-500 text-xs mt-1">{formik.errors.country}</p>
+                          <p className="text-red-500 text-xs mt-1">
+                            {formik.errors.country}
+                          </p>
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="state" className="text-sm font-medium text-gray-700">State</Label>
+                        <Label
+                          htmlFor="state"
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          State
+                        </Label>
                         <Input
                           id="state"
                           name="state"
@@ -219,11 +294,18 @@ export function CheckoutPage() {
                           className="mt-1"
                         />
                         {formik.touched.state && formik.errors.state && (
-                          <p className="text-red-500 text-xs mt-1">{formik.errors.state}</p>
+                          <p className="text-red-500 text-xs mt-1">
+                            {formik.errors.state}
+                          </p>
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="pincode" className="text-sm font-medium text-gray-700">Pincode</Label>
+                        <Label
+                          htmlFor="pincode"
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          Pincode
+                        </Label>
                         <Input
                           id="pincode"
                           name="pincode"
@@ -232,11 +314,18 @@ export function CheckoutPage() {
                           className="mt-1"
                         />
                         {formik.touched.pincode && formik.errors.pincode && (
-                          <p className="text-red-500 text-xs mt-1">{formik.errors.pincode}</p>
+                          <p className="text-red-500 text-xs mt-1">
+                            {formik.errors.pincode}
+                          </p>
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="city" className="text-sm font-medium text-gray-700">Town/City</Label>
+                        <Label
+                          htmlFor="city"
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          Town/City
+                        </Label>
                         <Input
                           id="city"
                           name="city"
@@ -245,11 +334,18 @@ export function CheckoutPage() {
                           className="mt-1"
                         />
                         {formik.touched.city && formik.errors.city && (
-                          <p className="text-red-500 text-xs mt-1">{formik.errors.city}</p>
+                          <p className="text-red-500 text-xs mt-1">
+                            {formik.errors.city}
+                          </p>
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="landMark" className="text-sm font-medium text-gray-700">Landmark</Label>
+                        <Label
+                          htmlFor="landMark"
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          Landmark
+                        </Label>
                         <Input
                           id="landMark"
                           name="landMark"
@@ -258,7 +354,9 @@ export function CheckoutPage() {
                           className="mt-1"
                         />
                         {formik.touched.landMark && formik.errors.landMark && (
-                          <p className="text-red-500 text-xs mt-1">{formik.errors.landMark}</p>
+                          <p className="text-red-500 text-xs mt-1">
+                            {formik.errors.landMark}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -269,9 +367,25 @@ export function CheckoutPage() {
                     >
                       {isAdding ? (
                         <span className="flex items-center justify-center">
-                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          <svg
+                            className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
                           </svg>
                           Adding New Address
                         </span>
@@ -284,7 +398,7 @@ export function CheckoutPage() {
               </section>
             )}
           </div>
-          
+
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm sticky top-4">
               <div className="bg-gray-100 p-4 border-b">
@@ -296,7 +410,9 @@ export function CheckoutPage() {
               <div className="p-6 space-y-4">
                 <div className="flex justify-between items-center pb-4 border-b border-gray-200">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-semibold text-gray-900">₹{totalPrice}</span>
+                  <span className="font-semibold text-gray-900">
+                    ₹{totalPrice}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center pb-4 border-b border-gray-200">
                   <span className="text-gray-600">Shipping</span>
@@ -305,9 +421,19 @@ export function CheckoutPage() {
                     FREE
                   </span>
                 </div>
+                <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+                  <span className="text-gray-600">Total Discount</span>
+                  <span className="font-semibold text-green-500">
+                    ₹-{totalDiscount}
+                  </span>
+                </div>
                 <div className="flex justify-between items-center pt-4">
-                  <span className="text-lg font-semibold text-gray-900">Total</span>
-                  <span className="text-xl font-bold text-gray-900">₹{totalPrice}</span>
+                  <span className="text-lg font-semibold text-gray-900">
+                    Total
+                  </span>
+                  <span className="text-xl font-bold text-gray-900">
+                    ₹{totalPrice - totalDiscount} /-
+                  </span>
                 </div>
                 <Button
                   onClick={handleProceed}
@@ -325,4 +451,3 @@ export function CheckoutPage() {
     </div>
   );
 }
-

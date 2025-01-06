@@ -67,7 +67,10 @@ export const OrdersListPage = () => {
                       Price & quantity
                     </TableHead>
                     <TableHead className=" text-orange-600">
-                      Total Price
+                      Paid Amount
+                    </TableHead>
+                    <TableHead className=" text-orange-600">
+                      Discount
                     </TableHead>
                     <TableHead className=" text-orange-600">Address</TableHead>
                     <TableHead className=" text-orange-600">
@@ -107,7 +110,8 @@ export const OrdersListPage = () => {
                           </div>
                         ))}
                       </TableCell>
-                      <TableCell>{order?.payableAmount}</TableCell>
+                      <TableCell>₹{order?.payableAmount}</TableCell>
+                      <TableCell>₹{order?.totalDiscount}</TableCell>
                       <TableCell>
                         <div className="flex flex-col">
                           <p>{order?.address?.fullName}</p>

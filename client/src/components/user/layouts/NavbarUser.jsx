@@ -80,14 +80,14 @@ export const NavbarUser = ({ itemsInCart }) => {
       <div className="container mx-auto px-4 py-2">
         <div className="flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="bg-red-600 p-2 rounded">
+            <div>
               <img
-                src="/placeholder.svg?height=32&width=32"
+                src="logo/a-logo-for-an-e-commerce-website-selling_e0mnzUsxQQenSmAK3BEthw_xnvkJPvaTGi_ioiYxnBVkw.jpeg"
                 alt="Dune Logo"
-                className="h-8 w-8"
+                className="h-14 w-14 object-fill rounded-sm"
               />
             </div>
-            <span className="text-xl font-bold">Dune</span>
+            <span className="text-xl font-jacquard">Dune Audio</span>
           </Link>
 
           <div className="flex-1 gap-3 max-w-2xl mx-auto flex mt-3 mb-3" ref={searchRef}>
@@ -137,7 +137,7 @@ export const NavbarUser = ({ itemsInCart }) => {
               className="flex flex-col items-center gap-1 hover:text-gray-600 transition-colors"
               aria-label="Wishlist"
             >
-              <FaHeart className="h-6 w-6" />
+              <FaHeart className="h-6 w-6" onClick={() => navigate("/wishlist")} />
             </button>
             <button
               className="flex flex-col items-center gap-1 hover:text-gray-600 transition-colors"

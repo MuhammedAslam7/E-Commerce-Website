@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { SidebarAdmin } from "@/components/admin/layouts/SidebarAdmin";
 import { NavbarAdmin } from "@/components/admin/layouts/NavbarAdmin";
+import { useDashboardQuery } from "@/services/api/admin/adminApi";
 import {
   AreaChart,
   Area,
@@ -66,43 +67,7 @@ const orderStatusData = [
   { status: "Cancelled", value: 10 },
 ];
 
-const recentOrders = [
-  {
-    id: "1234",
-    customer: "John Doe",
-    total: "$120.50",
-    status: "Completed",
-    date: "2024-11-08",
-  },
-  {
-    id: "1235",
-    customer: "Jane Smith",
-    total: "$85.20",
-    status: "Processing",
-    date: "2024-11-07",
-  },
-  {
-    id: "1236",
-    customer: "Bob Johnson",
-    total: "$220.00",
-    status: "Completed",
-    date: "2024-11-07",
-  },
-  {
-    id: "1237",
-    customer: "Alice Brown",
-    total: "$45.99",
-    status: "Cancelled",
-    date: "2024-11-06",
-  },
-  {
-    id: "1238",
-    customer: "Charlie Wilson",
-    total: "$175.30",
-    status: "Processing",
-    date: "2024-11-06",
-  },
-];
+
 
 const topProducts = [
   { name: "Wireless Earbuds", sales: 1200, revenue: "$36,000" },
@@ -113,6 +78,9 @@ const topProducts = [
 ];
 
 export function AdminDashboard() {
+  const {data} = useDashboardQuery()
+
+  const { totalRevenue, ordersCount, customers, recentOrders } = data || {}
   const [selectedPeriod, setSelectedPeriod] = useState("This Month");
   const [isDarkMode, setIsDarkMode] = useState(true);
 
@@ -123,15 +91,14 @@ export function AdminDashboard() {
   return (
     <div className={`flex min-h-screen ${isDarkMode ? "dark" : ""}`}>
       <SidebarAdmin />
-      <main className="flex-1 overflow-auto bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+      <main className="flex-1  overflow-auto bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
         <NavbarAdmin
           isDarkMode={isDarkMode}
           setIsDarkMode={setIsDarkMode}
           pageName="DASHBOARD"
         />
-        <div className="p-6 space-y-8">
-          {/* Quick Stats */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="container p-6 space-y-8">
+          <div className="grid mx-auto gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -140,7 +107,7 @@ export function AdminDashboard() {
                 <DollarSign className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">$45,231.89</div>
+                <div className="text-2xl font-bold">{totalRevenue}</div>
                 <p className="text-xs text-blue-600">+20.1% from last month</p>
               </CardContent>
             </Card>
@@ -150,7 +117,7 @@ export function AdminDashboard() {
                 <ShoppingCart className="h-4 w-4 text-pink-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">+2350</div>
+                <div className="text-2xl font-bold">{ordersCount}</div>
                 <p className="text-xs text-pink-600">+180.1% from last month</p>
               </CardContent>
             </Card>
@@ -160,7 +127,7 @@ export function AdminDashboard() {
                 <Users className="h-4 w-4 text-cyan-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">+12,234</div>
+                <div className="text-2xl font-bold">{customers}</div>
                 <p className="text-xs text-cyan-600">+19% from last month</p>
               </CardContent>
             </Card>
@@ -299,24 +266,24 @@ export function AdminDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {recentOrders.map((order) => (
-                      <TableRow key={order.id}>
+                    {recentOrders?.map((order) => (
+                      <TableRow key={order._id}>
                         <TableCell className="font-medium">
-                          {order.id}
+                          {order._id}
                         </TableCell>
-                        <TableCell>{order.customer}</TableCell>
-                        <TableCell>{order.total}</TableCell>
+                        <TableCell>{order?.userId?.username}</TableCell>
+                        <TableCell>{order.payableAmount}</TableCell>
                         <TableCell>
                           <span
                             className={`inline-block rounded-full px-2 py-1 text-xs font-semibold ${
-                              order.status === "Completed"
+                              order.orderStatus === "Delivered"
                                 ? "bg-green-200 text-green-800"
-                                : order.status === "Processing"
+                                : order.orderStatus === "Pending"
                                 ? "bg-yellow-200 text-yellow-800"
                                 : "bg-red-200 text-red-800"
                             }`}
                           >
-                            {order.status}
+                            {order?.orderStatus}
                           </span>
                         </TableCell>
                       </TableRow>

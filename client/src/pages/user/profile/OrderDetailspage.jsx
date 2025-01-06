@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp, Printer } from "lucide-react";
 import {
   useOrderByIdQuery,
   useCancelOrderMutation,
-  useCancelItemMutation
+  useCancelItemMutation,
 } from "@/services/api/user/userApi";
 import { useParams } from "react-router-dom";
 import { NavbarUser } from "@/components/user/layouts/NavbarUser";
@@ -27,13 +27,13 @@ export const OrderDetailsPage = () => {
   const { orderId } = useParams();
   const { data, isLoading } = useOrderByIdQuery(orderId);
   const [cancelOrder] = useCancelOrderMutation();
-  const [cancelItem] = useCancelItemMutation()
+  const [cancelItem] = useCancelItemMutation();
   const [isProductsExpanded, setIsProductsExpanded] = useState(true);
   const [order, setOrder] = useState({});
   const [cancelOrderModal, setCancelOrderModal] = useState(false);
   const [cancelItemModal, setCancelItemModal] = useState(false);
-  const [currentCancelItem, setCurrentCancelItem] = useState(null)
-  console.log(order)
+  const [currentCancelItem, setCurrentCancelItem] = useState(null);
+  console.log(order);
 
   useEffect(() => {
     if (data?.order) {
@@ -59,21 +59,21 @@ export const OrderDetailsPage = () => {
   };
 
   const handleCancelItem = (product) => {
-      setCurrentCancelItem(product)
-      setCancelItemModal(true)
-      console.log(product)
-  }
+    setCurrentCancelItem(product);
+    setCancelItemModal(true);
+    console.log(product);
+  };
 
   const cancelItemConfirm = async () => {
     try {
-      await cancelItem({orderId: order.orderId, itemId: currentCancelItem.itemId}).unwrap()
-      setCancelItemModal(false)
-
+      await cancelItem({
+        orderId: order.orderId,
+        itemId: currentCancelItem.itemId,
+      }).unwrap();
+      setCancelItemModal(false);
     } catch (error) {
-      console.log(error)
-      
+      console.log(error);
     }
-
   };
 
   const getStatusColor = (status) => {
@@ -110,7 +110,10 @@ export const OrderDetailsPage = () => {
             <CardTitle className="text-2xl font-bold">Order Details</CardTitle>
             <div className="flex space-x-2">
               <Button
-                disabled={order?.orderStatus == "Cancelled" || order?.orderStatus == "Delivered"}
+                disabled={
+                  order?.orderStatus == "Cancelled" ||
+                  order?.orderStatus == "Delivered"
+                }
                 onClick={() => setCancelOrderModal(true)}
                 variant="destructive"
                 size="sm"
@@ -129,7 +132,9 @@ export const OrderDetailsPage = () => {
                 Print
               </Button>
 
-             {order?.orderStatus == "Delivered" && <Button className="bg-orange-500">Return Order</Button>} 
+              {order?.orderStatus == "Delivered" && (
+                <Button className="bg-orange-500">Return Order</Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -251,7 +256,7 @@ export const OrderDetailsPage = () => {
                         <TableCell>
                           <div className="ml-3">{product?.quantity}</div>
                         </TableCell>
-                        <TableCell>₹{product?.price?.toFixed(2)}</TableCell>
+                        <TableCell>₹{product?.discountedPrice ? product?.discountedPrice : product?.price?.toFixed(2)}</TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
@@ -261,18 +266,29 @@ export const OrderDetailsPage = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            onClick={() => handleCancelItem(product)}
-                            disabled={
-                              product?.itemStatus == "Cancelled" ||
-                              order?.products?.length == 1
-                            }
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Cancel Item
-                          </Button>
+                          {product?.itemStatus == "Delivered" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-orange-500 hover:text-red-900"
+                            >
+                              Return Item
+                            </Button>
+                          )}
+                          {product?.itemStatus !== "Delivered" && (
+                            <Button
+                              onClick={() => handleCancelItem(product)}
+                              disabled={
+                                product?.itemStatus == "Cancelled" ||
+                                order?.products?.length == 1
+                              }
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Cancel Item
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

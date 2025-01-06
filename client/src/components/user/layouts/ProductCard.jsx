@@ -8,6 +8,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { useAddToWishlistMutation } from '@/services/api/user/userApi';
 
 export const ProductCard = ({
   thumbnailImage,
@@ -19,9 +20,11 @@ export const ProductCard = ({
   reviewCount = 123,
   isNew = false,
   discountPercentage = 0,
+  discountedPrice
 }) => {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
+  const [addToWishlist] = useAddToWishlistMutation()
 
   const handleCardClick = (e) => {
     if (!e.defaultPrevented) {
@@ -29,22 +32,27 @@ export const ProductCard = ({
     }
   };
 
+  const handleAddToWishlist = async() => {
+    console.log("Bitch")
+    console.log(productId)
+    try {
+      await addToWishlist({productId}).unwrap()
+    } catch (error) {
+      console.log(error)
+      
+    }
+  }
+
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD'
+    currency: 'INR'
   }).format(price);
 
-  const discountedPrice = discountPercentage > 0
-    ? new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD'
-      }).format(price * (1 - discountPercentage / 100))
-    : null;
+
 
   return (
     <Card
       className="group relative overflow-hidden transition-all duration-300 hover:shadow-2xl cursor-pointer bg-white rounded-2xl border-0"
-      onClick={handleCardClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -71,9 +79,9 @@ export const ProductCard = ({
             variant="secondary"
             size="icon"
             className="bg-white/90 text-gray-800 hover:bg-white hover:text-pink-600 shadow-lg transition-transform duration-300 hover:scale-110 rounded-full h-12 w-12"
-            onClick={(e) => e.preventDefault()}
+            onClick={handleAddToWishlist}
           >
-            <Heart className="h-5 w-5" />
+            <Heart  className="h-5 w-5" />
           </Button>
           <Button
             variant="secondary"
@@ -108,11 +116,11 @@ export const ProductCard = ({
         <div className="flex flex-col">
           {discountedPrice ? (
             <>
-              <span className="text-2xl font-bold text-red-600">{discountedPrice}</span>
+              <span className="text-2xl font-bold text-red-600">₹{discountedPrice}</span>
               <span className="text-sm text-gray-500 line-through">{formattedPrice}</span>
             </>
           ) : (
-            <span className="text-2xl font-bold text-gray-900">₹{price}</span>
+          <span className="text-2xl font-bold text-gray-900">₹{price}</span>
           )}
         </div>
         <div className={`transition-all duration-300 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>

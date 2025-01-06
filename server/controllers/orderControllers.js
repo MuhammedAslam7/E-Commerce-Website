@@ -3,6 +3,10 @@ import { Cart } from "../model/cart.js";
 import { Order } from "../model/orderSchema.js";
 import { Product } from "../model/product.js";
 import User from "../model/userModel.js";
+import Razorpay from "razorpay";
+import crypto from "crypto";
+import { razorpayInstance } from "../utils/razorPay.js";
+
 ////////////////////////////////////////////////////////////
 //admin
 export const allOrders = async (req, res) => {
@@ -40,6 +44,7 @@ export const allOrders = async (req, res) => {
           orderId: order._id,
           paymentMethod: order.paymentMethod,
           payableAmount: order.payableAmount,
+          totalDiscount: order.totalDiscount,
           orderAt: order.orderAt,
           orderStatus: order.orderStatus,
           products: productsWithVariants,
@@ -77,19 +82,20 @@ export const orderDetailsById = async (req, res) => {
       res.status(404).json({ message: "The Order is not exist" });
     }
 
-    const uniqueStatuses = [...new Set(order.products.map((product) => product.itemStatus))];
+    const uniqueStatuses = [
+      ...new Set(order.products.map((product) => product.itemStatus)),
+    ];
 
-    for(let status of uniqueStatuses) {
-      const isCommon =  order.products.every((product) => product.itemStatus == status)
-      if(isCommon) {
-        order.orderStatus = status
-        await order.save()
-        break
-  
+    for (let status of uniqueStatuses) {
+      const isCommon = order.products.every(
+        (product) => product.itemStatus == status
+      );
+      if (isCommon) {
+        order.orderStatus = status;
+        await order.save();
+        break;
       }
     }
-
-
 
     const productsWithVariants = await Promise.all(
       order.products.map(async (product) => {
@@ -144,7 +150,7 @@ export const updateOrderStatus = async (req, res) => {
   try {
     const order = await Order.updateOne(
       { _id: orderId },
-      { $set: { orderStatus: newStatus }}
+      { $set: { orderStatus: newStatus } }
     );
 
     if (!order) {
@@ -179,26 +185,27 @@ export const updateItemStatus = async (req, res) => {
       { _id: orderId, "products._id": itemId },
       { $set: { "products.$.itemStatus": newStatus } }
     );
-    if(!updateItemStatus) {
-      return res.status(404).json({mesage: "Order not found"})
+    if (!updateItemStatus) {
+      return res.status(404).json({ mesage: "Order not found" });
     }
-    if(newStatus == "Cancelled") {
-      console.log("canceled")
-      const currentOrder = await Order.findById(orderId)
-      const currentItem = currentOrder.products.id(itemId)
-      const currentProduct = await Product.findOne({_id: currentItem.productId})
-      const currentVariant = currentProduct.variants.id(currentItem.variantId)
+    if (newStatus == "Cancelled") {
+      console.log("canceled");
+      const currentOrder = await Order.findById(orderId);
+      const currentItem = currentOrder.products.id(itemId);
+      const currentProduct = await Product.findOne({
+        _id: currentItem.productId,
+      });
+      const currentVariant = currentProduct.variants.id(currentItem.variantId);
 
-      currentVariant.stock += currentItem.quantity
+      currentVariant.stock += currentItem.quantity;
 
-      await currentProduct.save()
-
+      await currentProduct.save();
     }
 
-    res.status(200).json(updatedOne)
+    res.status(200).json(updatedOne);
   } catch (error) {
-    console.log(error)
-    res.status(500).json({message: "Internal server error"})
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -210,78 +217,86 @@ export const placeOrder = async (req, res) => {
   if (!userId) {
     return res.status(404).json({ message: "User is not valid" });
   }
-  const { addressId, paymentMethod } = req.body;
+  const { addressId, paymentMethod, totalPrice, } = req.body;
 
   try {
-    const user = await User.findById(userId);
+    if (paymentMethod == "cash on delivery") {
+      const user = await User.findById(userId);
+      console.log(user)
 
-    const address = await Address.findOne({ _id: addressId, userId });
-    if (!address) return res.status(404).json({ message: "Address not found" });
-    const cart = await Cart.findOne({ userId }).populate(
-      "items.productId",
-      "price"
-    );
+      const address = await Address.findOne({ _id: addressId, userId });
+      if (!address)
+        return res.status(404).json({ message: "Address not found" });
 
-    if (!cart || cart.items.length === 0)
-      return res.status(400).json({ message: "Cart is empty" });
-
-    const products = cart.items.map((item) => ({
-      productId: item.productId._id,
-      variantId: item.variantId,
-      quantity: item.quantity,
-      productPrice: item.productId.price,
-    }));
-    console.log(products);
-    const payableAmount = products.reduce(
-      (sum, product) => sum + product.productPrice * product.quantity,
-      0
-    );
-    const newOrder = new Order({
-      userId,
-      addressId,
-      paymentMethod,
-      payableAmount,
-      products,
-    });
-
-    for (let item of products) {
-      const { productId, variantId, quantity } = item;
-
-      const product = await Product.findOne({
-        _id: productId,
-        "variants._id": variantId,
-      });
-
-      const variant = product.variants.find((variant) =>
-        variant._id.equals(variantId)
+      const cart = await Cart.findOne({ userId }).populate(
+        "items.productId",
+        "price"
       );
 
-      if (variant) {
-        variant.stock = Math.max(0, variant.stock - quantity);
+      if (!cart || cart.items.length === 0)
+        return res.status(400).json({ message: "Cart is empty" });
 
-        await product.save();
+      const products = cart.items.map((item) => ({
+        productId: item.productId._id,
+        variantId: item.variantId,
+        quantity: item.quantity,
+        productPrice: item.productId.price,
+      }));
+
+      const payableAmount = products.reduce(
+        (sum, product) => sum + product.productPrice * product.quantity,
+        0
+      );
+
+      const newOrder = new Order({
+        userId,
+        addressId,
+        paymentMethod,
+        payableAmount : payableAmount - cart.totalDiscount,
+        totalDiscount: cart.totalDiscount,
+        products,
+      });
+
+      for (let item of products) {
+        const { productId, variantId, quantity } = item;
+
+        const product = await Product.findOne({
+          _id: productId,
+          "variants._id": variantId,
+        });
+
+        const variant = product.variants.find((variant) =>
+          variant._id.equals(variantId)
+        );
+
+        if (variant) {
+          variant.stock = Math.max(0, variant.stock - quantity);
+          await product.save();
+        }
       }
+
+      await newOrder.save();
+
+      // cart.items = [];
+      // cart.totalPrice = 0;
+
+      await cart.save();
+
+      res.status(201).json({
+        message: "Order placed successfully",
+        order: newOrder,
+      });
     }
-    // easy way
-    // const bulkOps = data.map(({ productId, variantId, quantity }) => ({
-    //   updateOne: {
-    //     filter: { _id: productId, "variants._id": variantId },
-    //     update: { $inc: { "variants.$.stock": -quantity } },
-    //   },
-    // }));
+    if (paymentMethod == "razorpay") {
+      const options = {
+        amount: totalPrice * 100,
+        currency: "INR",
+        receipt: "receipt_" + Math.random().toString(36).substring(7),
+      };
 
-    // await Product.bulkWrite(bulkOps);
-
-    await newOrder.save();
-
-    cart.items = [];
-    cart.totalPrice = 0;
-
-    await cart.save();
-    res.status(201).json({
-      message: "Order placed successfully",
-      order: newOrder,
-    });
+      const order = await razorpayInstance.orders.create(options);
+      return res.status(200).json(order);
+    }
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -351,6 +366,102 @@ export const myOrders = async (req, res) => {
   }
 };
 //////////////////////////////////////////////////////////////
+
+export const razorPayPayment = async (req, res) => {
+  try {
+    const {userId} = req.user
+
+    const {
+      addressId,
+      paymentMethod,
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
+    } = req.body;
+    console.log(
+      addressId,
+      paymentMethod,
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature
+    );
+
+    const sign = razorpayOrderId + "|" + razorpayPaymentId;
+    const generatedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_SECRET_KEY)
+      .update(sign.toString())
+      .digest("hex");
+
+    if (generatedSignature !== razorpaySignature) {
+      return res.status(400).json({ message: "Invalid payment signature" });
+    }
+
+    const cart = await Cart.findOne({ userId }).populate(
+      "items.productId",
+      "price"
+    );
+
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ message: "Cart is empty" });
+    }
+    const products = cart.items.map((item) => ({
+      productId: item.productId._id,
+      variantId: item.variantId,
+      quantity: item.quantity,
+      productPrice: item.productId.price,
+    }));
+
+    const payableAmount = products.reduce(
+      (sum, product) => sum + product.productPrice * product.quantity,
+      0
+    );
+
+    const newOrder = new Order({
+      userId,
+      addressId,
+      paymentMethod,
+      payableAmount,
+      paymentId: razorpayPaymentId,
+      paymentStatus: "Paid",
+      orderStatus: "Pending",
+      products,
+    });
+
+    for (let item of products) {
+      const { productId, variantId, quantity } = item;
+
+      const product = await Product.findOne({
+        _id: productId,
+        "variants._id": variantId,
+      });
+
+      const variant = product.variants.find((variant) =>
+        variant._id.equals(variantId)
+      );
+
+      if (variant) {
+        variant.stock = Math.max(0, variant.stock - quantity);
+        await product.save();
+      }
+    }
+
+    await newOrder.save();
+
+    // cart.items = [];
+    // cart.totalPrice = 0;
+    await cart.save();
+    res.status(200).json({
+      message: "Order placed successfully",
+      order: newOrder,
+    });
+  } catch (error) {
+    console.log(error)
+    res
+      .status(500)
+      .json({ message: "Failed to verify payment and create order" });
+  }
+};
+///////////////////////////////////////////////////////////
 export const orderDetails = async (req, res) => {
   const { userId } = req.user;
 
@@ -432,14 +543,13 @@ export const cancelOrder = async (req, res) => {
   }
   const { id } = req.body;
   try {
-   
-    const currentOrder = await Order.findById(id)
+    const currentOrder = await Order.findById(id);
 
     await Promise.all(
       currentOrder.products.map(async (product) => {
         const fullProduct = await Product.findById(product.productId);
         const variant = fullProduct.variants.id(product.variantId);
-    
+
         if (variant && product.itemStatus !== "Cancelled") {
           variant.stock += product.quantity;
           await fullProduct.save();
@@ -459,8 +569,6 @@ export const cancelOrder = async (req, res) => {
       return res.status(404).json({ message: "Order not existed" });
     }
 
-
-   
     res.status(200).json({ message: "Order cancelled Successfully", order });
   } catch (error) {
     console.log(error);
@@ -489,18 +597,16 @@ export const cancelItem = async (req, res) => {
       return res.status(404).json({ message: "Unable to cancel the item" });
     }
 
+    const currentOrder = await Order.findById(orderId);
+    const currentItem = currentOrder.products.id(itemId);
+    const currentProduct = await Product.findOne({
+      _id: currentItem.productId,
+    });
+    const currentVariant = currentProduct.variants.id(currentItem.variantId);
 
-    
-      const currentOrder = await Order.findById(orderId)
-      const currentItem = currentOrder.products.id(itemId)
-      const currentProduct = await Product.findOne({_id: currentItem.productId})
-      const currentVariant = currentProduct.variants.id(currentItem.variantId)
+    currentVariant.stock += currentItem.quantity;
 
-      currentVariant.stock += currentItem.quantity
-
-      await currentProduct.save()
-
-    
+    await currentProduct.save();
 
     res.status(200).json(updatedItem);
   } catch (error) {

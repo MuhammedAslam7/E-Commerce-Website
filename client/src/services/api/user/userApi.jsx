@@ -11,6 +11,7 @@ export const userApi = createApi({
     "Profile",
     "ProductDetails",
     "MyOrders",
+    "Wishlist"
   ],
   endpoints: (builder) => ({
     userHome: builder.query({
@@ -119,10 +120,10 @@ export const userApi = createApi({
       invalidatesTags: ["Profile"],
     }),
     addOrder: builder.mutation({
-      query: ({ addressId, paymentMethod }) => ({
+      query: ({ addressId, paymentMethod, totalPrice, totalDiscount }) => ({
         url: "user/place-order",
         method: "POST",
-        body: { addressId, paymentMethod },
+        body: { addressId, paymentMethod, totalPrice, totalDiscount },
       }),
       invalidatesTags: ["ProductDetails", "Cart", "MyOrders"],
     }),
@@ -167,6 +168,42 @@ export const userApi = createApi({
         url: "user/items-for-search",
         method: "GET"
       })
+    }),
+    razorpayPayment: builder.mutation({
+      query: ({addressId, paymentMethod, razorpayPaymentId, razorpayOrderId, razorpaySignature})=> ({
+        url: "user/razorpay-payment",
+        method: "POST",
+        body: {addressId, paymentMethod, razorpayPaymentId, razorpayOrderId, razorpaySignature}
+      })
+    }),
+    addToWishlist: builder.mutation({
+      query: ({productId}) => ({
+        url: "user/add-to-wishlist",
+        method:"POST",
+        body: {productId}
+      }),
+      invalidatesTags: ["Wishlist"]
+    }),
+    getWishlist: builder.query({
+      query: () => ({
+        url: "user/wishlist",
+        method: "GET",
+      }),
+      providesTags: ["Wishlist"]
+    }),
+    removeWishlistItem: builder.mutation({
+      query: ({productId}) => ({
+        url: "user/wishlist-remove-item",
+        method: "DELETE",
+        body: {productId}
+      }),
+      invalidatesTags:["Wishlist"]
+    }),
+    getWallet: builder.query({
+      query: () => ({
+        url: "user/wallet",
+        method: "GET",
+      })
     })
   }),
 });
@@ -192,6 +229,11 @@ export const {
   useCancelOrderMutation,
   useCancelItemMutation,
   useGetCategoryBrandQuery,
-  useAllProductsForSearchQuery
+  useAllProductsForSearchQuery,
+  useRazorpayPaymentMutation,
+  useAddToWishlistMutation,
+  useGetWishlistQuery,
+  useRemoveWishlistItemMutation,
+  useGetWalletQuery
 
 } = userApi;

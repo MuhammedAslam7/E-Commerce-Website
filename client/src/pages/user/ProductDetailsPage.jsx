@@ -46,7 +46,8 @@ export function ProductDetailsPage() {
       setCurrentVariant(0);
     }
   }, [product?.variants]);
-
+  
+  const discountPercentage = ((product?.price - product?.discountedPrice) / product?.price) * 100
   const variants = product?.variants || [];
 
   // const decreaseQuantity = () => {
@@ -216,15 +217,23 @@ export function ProductDetailsPage() {
           </div>
 
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-primary">
-              ₹{product?.price}
-            </span>
-            <span className="text-sm text-muted-foreground line-through">
-              ₹6000
-            </span>
-            <Badge variant="destructive" className="text-xs">
-              75% OFF
-            </Badge>
+            {product?.discountedPrice ? (
+              <>
+                <span className="text-2xl font-bold text-primary">
+                  ₹{product?.discountedPrice}
+                </span>
+                <span className="text-sm text-muted-foreground line-through">
+                  {product?.price}
+                </span>
+                <Badge variant="destructive" className="text-xs">
+                  {Math.ceil(discountPercentage)}% OFF
+                </Badge>{" "}
+              </>
+            ) : (
+              <span className="text-2xl font-bold text-primary">
+                ₹{product?.price}
+              </span>
+            )}
           </div>
 
           <p className="text-sm text-gray-700 font-medium">

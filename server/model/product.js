@@ -20,9 +20,10 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    // discountPrice: {
-    //   type: Number,
-    // },
+    discountedPrice: {
+      type: Number,
+      default: null,
+    },
     thumbnailImage: {
       type: String,
       required: true,
@@ -43,7 +44,13 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
     variants: [variantSchema],
+    
+    offers: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Offer"
+    }]
   },
+  
   {
     timestamps: true,
   }

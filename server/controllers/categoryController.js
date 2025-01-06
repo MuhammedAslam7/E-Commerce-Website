@@ -20,7 +20,6 @@ export const allCategories = async (req, res) => {
   try {
     const allCategories = await Category.find();
 
-    console.log(allCategories);
 
     res.status(200).json(allCategories);
   } catch (error) {

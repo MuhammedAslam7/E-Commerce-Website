@@ -36,6 +36,10 @@ const cartSchema = mongoose.Schema(
       type: Number,
       default: 0,
     },
+    totalDiscount: {
+      type: Number,
+      default: 0
+    },
   },
   { timestamps: true }
 );

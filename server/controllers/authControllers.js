@@ -5,6 +5,7 @@ import TempUser from "../model/tempUserModel.js";
 import Otp from "../model/otp.js";
 import { generateOTP, sendOTPEmail } from "../utils/otp.js";
 import { createAccessToken, createRefreshToken } from "../utils/jwt-token.js";
+import { Wallet } from "../model/walletSchema.js";
 
 export const signup = async (req, res) => {
   try {
@@ -136,6 +137,18 @@ export const signIn = async (req, res) => {
     // creating token
     const refreshToken = createRefreshToken(user);
     const accessToken = createAccessToken(user);
+
+    const haveWallet = await Wallet.findOne({userId: user._id})
+
+    if(!haveWallet) {
+      const newWallet = new Wallet({
+        userId: user._id,
+        balance: 0,
+        transactions: []
+      })
+
+      await newWallet.save()
+    }
 
     res
       .status(200)
@@ -357,6 +370,17 @@ export const googleAuth = async (req, res) => {
       const refreshToken = createRefreshToken(user);
       const accessToken = createAccessToken(user);
 
+      const haveWallet = await Wallet.findOne({userId: user._id})
+
+      if(!haveWallet) {
+        const newWallet = new Wallet({
+          userid: user._id,
+          balance: 0,
+          transactions: []
+        })
+        newWallet.save()
+      }
+
       res
         .status(200)
         .cookie("refreshToken", refreshToken, {
@@ -384,6 +408,14 @@ export const googleAuth = async (req, res) => {
       });
       const refreshToken = createRefreshToken(newUser);
       const accessToken = createAccessToken(newUser);
+
+      const wallet = new Wallet({
+        userId: newUser._id,
+        balance: 0,
+        transactions: []
+      })
+
+      wallet.save()
 
       res
         .status(200)

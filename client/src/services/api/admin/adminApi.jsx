@@ -164,7 +164,28 @@ export const adminApi = createApi({
         body: {itemId, orderId, newStatus}
       }),
       invalidatesTags: ["Orders", "Product"]
-    })
+    }),
+    addOffer: builder.mutation({
+      query: ({values}) => ({
+        url: "admin/offers/add-offer",
+        method: "POST",
+        body: {values}
+      })
+    }),
+    dashboard: builder.query({
+      query:() => ({
+        url: "admin/dasboard",
+        method: "GET"
+      })
+    }),
+    getSales: builder.query({
+      query: (params) => ({
+        url: "admin/sales-report",
+        params,
+      }),
+    }),
+   
+
   }),
 });
 
@@ -189,5 +210,8 @@ export const {
   useGetAllOrdersQuery,
   useGetOrderByIdQuery,
   useUpdateOrderStatusMutation,
-  useUpdateItemStatusMutation
+  useUpdateItemStatusMutation,
+  useAddOfferMutation,
+  useDashboardQuery,
+  useGetSalesQuery,
 } = adminApi;

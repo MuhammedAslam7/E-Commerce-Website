@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { SidebarAdmin } from "@/components/admin/layouts/SidebarAdmin";
 import { NavbarAdmin } from "@/components/admin/layouts/NavbarAdmin";
@@ -17,7 +15,6 @@ import { Plus, Edit, PlusIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToaster } from "@/utils/Toaster";
-// Importing the API hook
 import {
   useGetAllProductsQuery,
   useUpdateProductStatusMutation,
@@ -43,7 +40,6 @@ export function ProductPage() {
     setCurrentPage(data?.currentPage)
   }
 }, [data]);
-
 
   const [showModal, setShowModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);

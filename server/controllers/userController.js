@@ -38,6 +38,7 @@ export const userHome = async (req, res) => {
           productName: 1,
           description: 1,
           price: 1,
+          discountedPrice: 1,
           thumbnailImage: 1,
           images: 1,
           createdAt: 1,
@@ -148,6 +149,7 @@ export const addToCart = async (req, res) => {
         userId,
         items: [{ productId, variantId, color }],
         totalPrice: product.price,
+        totalDiscount : product.discountedPrice ? product.price - product.discountedPrice : 0
       });
     } else {
       let productExist = await cart.items.some(
@@ -162,6 +164,7 @@ export const addToCart = async (req, res) => {
       cart.items.push({ productId, variantId, color });
 
       cart.totalPrice += product.price;
+      cart.totalDiscount += product.discountedPrice ? product.price - product.discountedPrice : 0
     }
     await cart.save();
     res.status(200).json({ message: "Product Added to Cart. Go to cart" });
@@ -177,9 +180,7 @@ export const cartItems = async (req, res) => {
   try {
     const cart = await Cart.findOne({ userId })
       .populate(
-        "items.productId",
-        "productName description price thumbnailImage variants"
-      )
+        "items.productId")
       .exec();
 
     if (!cart) {
@@ -199,6 +200,7 @@ export const cartItems = async (req, res) => {
         productName: product?.productName,
         description: product?.description,
         price: product?.price,
+        discountedPrice: product?.discountedPrice,
         thumbnailImage: product?.thumbnailImage,
         color: item.color,
         quantity: item.quantity,
@@ -211,6 +213,7 @@ export const cartItems = async (req, res) => {
       userId: cart.userId,
       items,
       totalPrice: cart.totalPrice,
+      totalDiscount: cart.totalDiscount
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
@@ -253,6 +256,7 @@ export const updateCartQuantity = async (req, res) => {
 
     const difference = newQuantity - variantInCart.quantity;
     cart.totalPrice += product.price * difference;
+    cart.totalDiscount += product.discountedPrice ? (product.price - product.discountedPrice) * difference : 0
 
     variantInCart.quantity = newQuantity;
 
@@ -290,6 +294,7 @@ export const deleteCartItem = async (req, res) => {
     }
     const removedItem = cart.items[itemIndex];
     cart.totalPrice -= removedItem.quantity * product.price;
+    cart.totalDiscount -= product?.discountedPrice ? (product.price - product.discountedPrice) * removedItem.quantity : 0
 
     cart.items.splice(itemIndex, 1);
     await cart.save();
@@ -353,7 +358,7 @@ export const getAddress = async (req, res) => {
     return res.status(400).json({ message: "User is not valid" });
   }
   try {
-    const addresses = await Address.find({}, '-userId -createdAt -updatedAt -__v');
+    const addresses = await Address.find({userId}, '-userId -createdAt -updatedAt -__v');
 
     res.status(200).json({
       message: "Address fetched successfully",

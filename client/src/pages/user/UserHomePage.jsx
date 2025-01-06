@@ -80,6 +80,7 @@ export function UserHomePage() {
                 description={product?.description}
                 price={product?.price}
                 thumbnailImage={product?.thumbnailImage}
+                discountedPrice={product?.discountedPrice}
                 // images={product.images}
               />
             ))}
@@ -125,6 +126,7 @@ export function UserHomePage() {
                 description={product.description}
                 price={product?.price}
                 thumbnailImage={product?.thumbnailImage}
+                discountedPrice={product?.discountedPrice}
                 // images={product.images}
               />
             ))}

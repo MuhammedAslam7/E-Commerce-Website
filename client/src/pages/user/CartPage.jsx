@@ -31,14 +31,14 @@ export const CartPage = () => {
   const { data: cartData, isLoading } = useCartProductsQuery(userId);
   const [removeCartItem] = useRemoveCartItemMutation();
   const [products, setProducts] = useState([]);
-  const { items = [], totalPrice } = cartData || {};
-  console.log(items);
+  const { items = [], totalPrice, totalDiscount } = cartData || {};
 
   useEffect(() => {
     if (items?.length > 0) {
       setProducts(items);
     }
   }, [items]);
+
 
   const updateQuantity = async (productId, variantId, newQuantity, stock) => {
     const validQuantity = Math.max(1, newQuantity);
@@ -96,7 +96,7 @@ export const CartPage = () => {
       <NavbarUser />
       <SecondNavbarUser />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <Breadcrumbs currentPage='Cart' />
+        <Breadcrumbs currentPage="Cart" />
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">SHOPPING CART</h1>
           {items?.length !== 0 && (
@@ -155,9 +155,21 @@ export const CartPage = () => {
                           {product?.description}
                         </p>
                         <div className="flex items-center justify-between">
-                          <p className="text-2xl font-bold text-gray-900">
-                            ₹{product?.price?.toLocaleString("en-IN")}
-                          </p>
+                          {product?.discountedPrice ? (
+                            <div className="flex space-y-2 space-x-4">
+                              <p className="text-2xl font-bold text-gray-900">
+                                ₹
+                                {Math.ceil(product?.discountedPrice)?.toLocaleString(
+                                  "en-IN"
+                                )}
+                              </p>
+                              <span className="text-sm line-through text-red-500">
+                              ₹{product?.price}
+                              </span>
+                            </div>
+                          ) : (
+                            <p className="text-2xl font-bold text-gray-900">₹{product?.price}</p>
+                          )}
                           <p
                             className={
                               product?.variant?.stock > 1
@@ -242,10 +254,17 @@ export const CartPage = () => {
                     <span className="text-gray-600">Shipping</span>
                     <span className="font-medium text-green-600">Free</span>
                   </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Total Discount</span>
+                    <span className="font-medium text-green-600">₹{totalDiscount}</span>
+                  </div>
                   <Separator />
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold">Total</span>
-                    <span className="text-2xl font-bold">₹{totalPrice}</span>
+                    <div className="flex items-center gap-4">
+                      {totalDiscount > 0 && <span className="font-medium line-through text-red-500">₹{totalPrice}</span>}
+                    <span className="text-2xl font-bold">₹{totalPrice - totalDiscount}</span>
+                    </div>
                   </div>
                 </CardContent>
                 <CardFooter>
@@ -254,7 +273,7 @@ export const CartPage = () => {
                     size="lg"
                     onClick={() =>
                       navigate("/checkout-page", {
-                        state: { totalPrice: totalPrice },
+                        state: { totalPrice: totalPrice, totalDiscount },
                       })
                     }
                   >
