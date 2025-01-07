@@ -59,6 +59,8 @@ export const OrderManagePage = () => {
         return "bg-green-200 text-green-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
+      case "return requested": 
+      return "bg-orange-200 text-orange-800"
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -152,7 +154,6 @@ export const OrderManagePage = () => {
               </div>
             </div>
 
-            {/* Order Info Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="bg-gray-900 border-gray-800">
                 <CardHeader className="pb-3">
@@ -177,7 +178,6 @@ export const OrderManagePage = () => {
                 </CardContent>
               </Card>
 
-              {/* ... (Payment Details and Shipping Address cards remain the same) ... */}
               <Card className="bg-gray-900 border-gray-800">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-medium text-gray-400">
@@ -220,7 +220,6 @@ export const OrderManagePage = () => {
               </Card>
             </div>
 
-            {/* Products Table */}
             <Card className="bg-gray-900 border-gray-800">
               <CardHeader>
                 <CardTitle className="text-white">Order Items</CardTitle>

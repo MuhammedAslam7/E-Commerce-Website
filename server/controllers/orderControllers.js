@@ -6,6 +6,8 @@ import User from "../model/userModel.js";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import { razorpayInstance } from "../utils/razorPay.js";
+import mongoose from "mongoose";
+import { Wallet } from "../model/walletSchema.js";
 
 ////////////////////////////////////////////////////////////
 //admin
@@ -30,6 +32,7 @@ export const allOrders = async (req, res) => {
               price: product.productId.price,
               quantity: product.quantity,
               itemStatus: product.itemStatus,
+              itemReturnReason: product.itemReturnReason,
               itemId: product._id,
               variant: variant
                 ? {
@@ -208,6 +211,105 @@ export const updateItemStatus = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+//////////////////////////////////////////////////////////////////////////
+export const returnOrders = async (req, res) => {
+  try {
+    const returnOrders = await Order.find({
+      products: { $elemMatch: { itemStatus: "Return Requested" } },
+    }).populate("products.productId");
+
+    res.status(200).json({ orders: returnOrders });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+///////////////////////////////////////////////////////////////////////////////////
+export const updateReturn = async (req, res) => {
+  try {
+    const { orderId, itemId, result } = req.body;
+
+    console.log(orderId, itemId, result);
+
+    const updatedOrder = await Order.findOneAndUpdate(
+      {
+        _id: orderId,
+        "products._id": itemId,
+      },
+      { $set: { "products.$.itemStatus": result } },
+      { new: true }
+    );
+
+    if (!updatedOrder) {
+      return res.status(400).json({ message: "Order or product not found." });
+    }
+
+    const orderDetails = await Order.findOne(
+      { _id: orderId },
+      { paymentStatus: 1, userId: 1, _id: 0 }
+    );
+    console.log(orderDetails);
+
+    if (orderDetails?.paymentStatus === "Paid" && result === "Returned") {
+
+      const productDetailsArray = await Order.aggregate([
+        { $match: { _id: new mongoose.Types.ObjectId(orderId) } },
+        { $unwind: "$products" },
+        { $match: { "products._id": new mongoose.Types.ObjectId(itemId) } },
+        {
+          $lookup: {
+            from: "products",
+            localField: "products.productId",
+            foreignField: "_id",
+            as: "productDetails",
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            orderId: "$_id",
+            productId: "$products.productId",
+            itemId: "$products._id",
+            quantity: "$products.quantity",
+            productPrice: {
+              $ifNull: [
+                { $arrayElemAt: ["$productDetails.discountedPrice", 0] },
+                { $arrayElemAt: ["$productDetails.price", 0] },
+              ],
+            },
+          },
+        },
+      ]);
+
+      console.log(productDetailsArray)
+      if (!productDetailsArray || productDetailsArray.length === 0) {
+        return res.status(400).json({ message: "Product details not found." });
+      }
+
+      const productDetails = productDetailsArray[0];
+      const productPrice = Number(productDetails.productPrice);
+      const quantity = Number(productDetails.quantity)
+
+      if (isNaN(productPrice)) {
+        return res.status(400).json({ message: "Invalid product price." });
+      }
+
+      const wallet = await Wallet.findOne({ userId: orderDetails.userId });
+
+      if (!wallet) {
+        return res.status(400).json({ message: "Wallet not found for the user." });
+      }
+
+      wallet.balance += productPrice * quantity
+
+      await wallet.save();
+    }
+
+    res.status(200).json({ message: "Return updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+    console.error(error);
+  }
+};
 
 //user
 //////////////////////////////////////////////////////////////////////
@@ -217,12 +319,12 @@ export const placeOrder = async (req, res) => {
   if (!userId) {
     return res.status(404).json({ message: "User is not valid" });
   }
-  const { addressId, paymentMethod, totalPrice, } = req.body;
+  const { addressId, paymentMethod, totalPrice } = req.body;
 
   try {
     if (paymentMethod == "cash on delivery") {
       const user = await User.findById(userId);
-      console.log(user)
+      console.log(user);
 
       const address = await Address.findOne({ _id: addressId, userId });
       if (!address)
@@ -252,7 +354,7 @@ export const placeOrder = async (req, res) => {
         userId,
         addressId,
         paymentMethod,
-        payableAmount : payableAmount - cart.totalDiscount,
+        payableAmount: payableAmount - cart.totalDiscount,
         totalDiscount: cart.totalDiscount,
         products,
       });
@@ -369,7 +471,7 @@ export const myOrders = async (req, res) => {
 
 export const razorPayPayment = async (req, res) => {
   try {
-    const {userId} = req.user
+    const { userId } = req.user;
 
     const {
       addressId,
@@ -455,7 +557,7 @@ export const razorPayPayment = async (req, res) => {
       order: newOrder,
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res
       .status(500)
       .json({ message: "Failed to verify payment and create order" });
@@ -550,7 +652,11 @@ export const cancelOrder = async (req, res) => {
         const fullProduct = await Product.findById(product.productId);
         const variant = fullProduct.variants.id(product.variantId);
 
-        if (variant && product.itemStatus !== "Cancelled") {
+        if (
+          variant &&
+          product.itemStatus !== "Returned" &&
+          product.itemStatus !== "Cancelled"
+        ) {
           variant.stock += product.quantity;
           await fullProduct.save();
         }
@@ -613,3 +719,33 @@ export const cancelItem = async (req, res) => {
     res.status(500).json({ message: "Internal sever error" });
   }
 };
+/////////////////////////////////////////////////////////////////////////////
+export const returnItem = async (req, res) => {
+  const { userId } = req.user;
+  if (!userId) {
+    return res.status(404).json({ message: "User is not valid" });
+  }
+
+  try {
+    const { orderId, itemId, returnReason } = req.body;
+
+    const updatedItem = await Order.findOneAndUpdate(
+      {
+        _id: orderId,
+        "products._id": itemId,
+      },
+      {
+        $set: {
+          "products.$.itemStatus": "Return Requested",
+          "products.$.itemReturnReason": returnReason,
+        },
+      },
+      { new: true }
+    );
+
+    res.status(200).json({ message: "Return requested successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+///////////////////////////////////////////////////////////////////////////////////

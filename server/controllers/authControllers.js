@@ -374,7 +374,7 @@ export const googleAuth = async (req, res) => {
 
       if(!haveWallet) {
         const newWallet = new Wallet({
-          userid: user._id,
+          userId: user._id,
           balance: 0,
           transactions: []
         })
@@ -388,7 +388,7 @@ export const googleAuth = async (req, res) => {
           httpOnly: true,
           sameSite: "none",
           secure: true,
-          maxAge: 60 * 60 * 24 * 1000, // 1 day
+          maxAge: 60 * 60 * 24 * 1000,
         })
         .json({
           success: true,

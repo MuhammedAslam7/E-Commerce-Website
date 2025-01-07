@@ -38,6 +38,7 @@ import { OfferAddPage } from "./pages/admin/OfferAddPage";
 import { SalesReportPage } from "./pages/admin/SalesReportPage";
 import { WishListPage } from "./pages/user/WishListPage";
 import { WalletPage } from "./pages/user/profile/WalletPage";
+import { ReturnItemsPage } from "./pages/admin/ReturnItemsPage";
 
 const App = () => {
   return (
@@ -117,6 +118,7 @@ const App = () => {
           <Route path="/admin/offers" element={<OfferPage />} />
           <Route path="/admin/offers/add-offer" element={<OfferAddPage />} />
           <Route path="/admin/sales-report" element={<SalesReportPage />} />
+          <Route path="/admin/returns" element={<ReturnItemsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

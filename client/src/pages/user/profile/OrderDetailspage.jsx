@@ -4,6 +4,7 @@ import {
   useOrderByIdQuery,
   useCancelOrderMutation,
   useCancelItemMutation,
+  useReturnItemMutation,
 } from "@/services/api/user/userApi";
 import { useParams } from "react-router-dom";
 import { NavbarUser } from "@/components/user/layouts/NavbarUser";
@@ -22,18 +23,23 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { FooterUser } from "@/components/user/layouts/FooterUser";
 import { ConfirmationModal } from "@/components/user/modals/ConfirmationModal";
+import { Input } from "@/components/ui/input";
+import { useFormik } from "formik";
 
 export const OrderDetailsPage = () => {
   const { orderId } = useParams();
   const { data, isLoading } = useOrderByIdQuery(orderId);
   const [cancelOrder] = useCancelOrderMutation();
   const [cancelItem] = useCancelItemMutation();
+  const [returnItem] = useReturnItemMutation();
   const [isProductsExpanded, setIsProductsExpanded] = useState(true);
   const [order, setOrder] = useState({});
   const [cancelOrderModal, setCancelOrderModal] = useState(false);
   const [cancelItemModal, setCancelItemModal] = useState(false);
   const [currentCancelItem, setCurrentCancelItem] = useState(null);
-  console.log(order);
+  const [returnItemModal, setReturnItemModal] = useState(false);
+  const [currentReturnItem, setCurrentReturnItem] = useState(null);
+  const [returnFieldOpenId, setReturnFieldOpenId] = useState(null);
 
   useEffect(() => {
     if (data?.order) {
@@ -61,7 +67,6 @@ export const OrderDetailsPage = () => {
   const handleCancelItem = (product) => {
     setCurrentCancelItem(product);
     setCancelItemModal(true);
-    console.log(product);
   };
 
   const cancelItemConfirm = async () => {
@@ -76,6 +81,46 @@ export const OrderDetailsPage = () => {
     }
   };
 
+  const formik = useFormik({
+    initialValues: {
+      returnReason: "",
+    },
+
+    validate: (values) => {
+      const errors = {};
+
+      if (!values.returnReason) {
+        errors.returnReason = "This field is  required";
+      } else if (values.returnReason.length < 10) {
+        errors.returnReason = "Must be atleast 10 characters";
+      }
+      return errors;
+    },
+    onSubmit: (values) => {
+      console.log(values)
+      setReturnItemModal(true)
+    
+    },
+  });
+
+
+  const handleReturnConfirm = async () => {
+    try {
+      
+      await returnItem({
+        orderId: order.orderId,
+        itemId: currentReturnItem.itemId,
+        returnReason: formik.values.returnReason
+      }).unwrap();
+      setReturnItemModal(false);
+      setReturnFieldOpenId(null)
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+
+
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case "pending":
@@ -88,6 +133,10 @@ export const OrderDetailsPage = () => {
         return "bg-green-200 text-green-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
+      case "return requested":
+        return "bg-orange-200 text-orange-800";
+      case "returned":
+        return "bg-orange-500 text-white"
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -131,10 +180,6 @@ export const OrderDetailsPage = () => {
                 <Printer className="mr-2 h-4 w-4" />
                 Print
               </Button>
-
-              {order?.orderStatus == "Delivered" && (
-                <Button className="bg-orange-500">Return Order</Button>
-              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -256,7 +301,7 @@ export const OrderDetailsPage = () => {
                         <TableCell>
                           <div className="ml-3">{product?.quantity}</div>
                         </TableCell>
-                        <TableCell>₹{product?.discountedPrice ? product?.discountedPrice : product?.price?.toFixed(2)}</TableCell>
+                        <TableCell>₹{product?.price?.toFixed(2)}</TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
@@ -266,29 +311,70 @@ export const OrderDetailsPage = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {product?.itemStatus == "Delivered" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-orange-500 hover:text-red-900"
-                            >
-                              Return Item
-                            </Button>
-                          )}
-                          {product?.itemStatus !== "Delivered" && (
-                            <Button
-                              onClick={() => handleCancelItem(product)}
-                              disabled={
-                                product?.itemStatus == "Cancelled" ||
-                                order?.products?.length == 1
-                              }
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              Cancel Item
-                            </Button>
-                          )}
+                          <div>
+                            {(product?.itemStatus == "Delivered" ||
+                              product?.itemStatus == "Return Requested") && (
+                              <Button
+                                variant="ghost"
+                                disabled={
+                                  product?.itemStatus == "Return Requested"
+                                }
+                                size="sm"
+                                className="text-orange-500 hover:text-red-900"
+                                onClick={() => {
+                                  setCurrentReturnItem(product);
+                                  setReturnFieldOpenId(product?.itemId)}}
+                              >
+                                Return Item
+                              </Button>
+                            )}
+
+                            {product?.itemStatus !== "Delivered" &&
+                              product?.itemStatus !== "Return Requested" && product?.itemStatus !== "Returned" && (
+                                <Button
+                                  onClick={() => handleCancelItem(product)}
+                                  disabled={
+                                    product?.itemStatus == "Cancelled"
+                                  }
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-900"
+                                >
+                                  Cancel Item
+                                </Button>
+                              )}
+                            {returnFieldOpenId == product?.itemId && (
+                              <form
+                                className="flex gap-3 items-center"
+                                onSubmit={formik.handleSubmit}
+                              >
+                                <div>
+                                  <Input
+                                    type="text"
+                                    name="returnReason"
+                                    placeholder="Enter Return Reason"
+                                    value={formik.values.returnReason}
+                                    onChange={formik.handleChange}
+                                    onBlur={formik.handleBlur}
+                                    className="form-input"
+                                  />
+                                  {formik.touched.returnReason &&
+                                    formik.errors.returnReason && (
+                                      <div className="text-red-500">
+                                        {formik.errors.returnReason}
+                                      </div>
+                                    )}
+                                </div>
+                                <Button
+                                  
+                                  className="w-13 h-7"
+                                  type="submit"
+                                >
+                                  Submit
+                                </Button>
+                              </form>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -339,6 +425,15 @@ export const OrderDetailsPage = () => {
         message="Once you cancel this item it will remove from you orders !. If you have any other products that will be delivered"
         confirmText="Confirm Cancel"
         cancelText="Keep Item"
+      />
+      <ConfirmationModal
+        isOpen={returnItemModal}
+        onClose={() => setReturnItemModal(false)}
+        onConfirm={handleReturnConfirm}
+        title="Are You Sure"
+        message="if you return the item it will pick up by 2 to 3 days"
+        confirmText="Confirm Return"
+        cancelText="cancel"
       />
     </div>
   );

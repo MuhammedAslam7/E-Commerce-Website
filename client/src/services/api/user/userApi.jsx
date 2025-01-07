@@ -157,6 +157,14 @@ export const userApi = createApi({
       }),
       invalidatesTags: ["MyOrders"]
     }),
+    returnItem: builder.mutation({
+      query: ({orderId, itemId, returnReason}) => ({
+        url: "user/return-item",
+        method: "PATCH",
+        body: {orderId, itemId, returnReason}
+      }),
+      invalidatesTags: ["MyOrders"]
+    }),
     getCategoryBrand: builder.query({
       query: () => ({
         url: "user/category-brand",
@@ -228,6 +236,7 @@ export const {
   useOrderByIdQuery,
   useCancelOrderMutation,
   useCancelItemMutation,
+  useReturnItemMutation,
   useGetCategoryBrandQuery,
   useAllProductsForSearchQuery,
   useRazorpayPaymentMutation,

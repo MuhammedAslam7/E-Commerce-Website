@@ -21,11 +21,11 @@ const orderSchema = mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      required: true
+      required: true,
     },
     payableAmount: {
       type: Number,
-      required: true
+      required: true,
     },
     totalDiscount: {
       type: Number,
@@ -33,7 +33,14 @@ const orderSchema = mongoose.Schema(
     orderStatus: {
       type: String,
       required: true,
-      enum: ["Pending", "Shipped", "Delivered", "Cancelled"],
+      enum: [
+        "Pending",
+        "Shipped",
+        "Delivered",
+        "Cancelled",
+        "Return Requested",
+        "Returned",
+      ],
       default: "Pending",
     },
     paymentStatus: {
@@ -63,12 +70,13 @@ const orderSchema = mongoose.Schema(
           enum: ["Pending", "Shipped", "Delivered", "Cancelled"],
           default: "Pending",
         },
-     
-      
+        itemReturnReason: {
+          type: String,
+        },
       },
     ],
   },
   { timestamps: true }
 );
 
-export const Order = mongoose.model("Order", orderSchema)
+export const Order = mongoose.model("Order", orderSchema);

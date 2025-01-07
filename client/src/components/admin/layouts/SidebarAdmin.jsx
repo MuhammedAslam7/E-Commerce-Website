@@ -24,7 +24,7 @@ const navItems = [
   { icon: Users, label: "Users", href: "/admin/users" },
   { icon: ShoppingCart, label: "Orders", href: "/admin/orders" },
   { icon: BiSolidOffer, label: "Offers", href: "/admin/offers" },
-  { icon: DollarSign, label: "Transactions", href: "" },
+  { icon: DollarSign, label: "Returns", href: "/admin/returns" },
   { icon: Star, label: "Reviews", href: "#" },
 ];
 
