@@ -16,7 +16,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { X, Upload } from "lucide-react";
-import { useAddProductsMutation, useGetCategoryAndBrandQuery } from "@/services/api/admin/adminApi";
+import {
+  useAddProductsMutation,
+  useGetCategoryAndBrandQuery,
+} from "@/services/api/admin/adminApi";
 import { useToaster } from "@/utils/Toaster";
 import { ImageCropModal } from "@/components/admin/modals/ImageCropModal";
 import { ConfirmDialog } from "@/components/admin/modals/ConfirmDilalog";
@@ -54,19 +57,40 @@ export function ProductAddPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(null);
   const [formValues, setFormValues] = useState(null);
   const { categories, brands } = data || {};
-  const [resetFormFn, setResetFormFn] = useState(null)
+  const [resetFormFn, setResetFormFn] = useState(null);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
 
-  const handleImageUpload = useCallback((files) => {
-    const newImages = Array.from(files).map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-    }));
-    setImages((prevImages) => [...prevImages, ...newImages]);
-  }, []);
+  const handleImageUpload = useCallback(
+    (files) => {
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
+      const validFiles = Array.from(files).filter((file) => {
+        if (!allowedTypes.includes(file.type)) {
+          toast(
+            "Error",
+            "Only image files (JPEG, PNG, GIF, WEBP) are allowed",
+            "#ff0000"
+          );
+          return false;
+        }
+        return true;
+      });
+
+      const newImages = validFiles.map((file) => ({
+        file,
+        preview: URL.createObjectURL(file),
+      }));
+      setImages((prevImages) => [...prevImages, ...newImages]);
+    },
+    [toast]
+  );
 
   const openCropModal = (image, index) => {
     setCurrentImage(image.preview);
@@ -92,9 +116,7 @@ export function ProductAddPage() {
   const handleSubmit = async (values, { resetForm }) => {
     setFormValues(values);
     setIsConfirmModalOpen(true);
-    setResetFormFn(resetForm)
-
-   
+    setResetFormFn(resetForm);
   };
 
   const confirmSubmit = async () => {
@@ -124,10 +146,10 @@ export function ProductAddPage() {
       await addProducts(productData).unwrap();
       toast("Success", "Product Added Successfully", "#22c55e");
       if (resetFormFn) {
-        resetFormFn()
+        resetFormFn();
       }
 
-      Formik.values = {}
+      Formik.values = {};
       setImages([]);
       setFormValues(null);
     } catch (error) {
@@ -195,7 +217,10 @@ export function ProductAddPage() {
                             )}
                           </div>
                           <div>
-                            <Label htmlFor="brand" className="text-sm font-medium">
+                            <Label
+                              htmlFor="brand"
+                              className="text-sm font-medium"
+                            >
                               Brand
                             </Label>
                             <Select
@@ -232,7 +257,10 @@ export function ProductAddPage() {
 
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <Label htmlFor="price" className="text-sm font-medium">
+                            <Label
+                              htmlFor="price"
+                              className="text-sm font-medium"
+                            >
                               Price
                             </Label>
                             <Field
@@ -242,7 +270,9 @@ export function ProductAddPage() {
                               name="price"
                               placeholder="Enter price"
                               className={`mt-1 ${
-                                errors.price && touched.price ? "border-red-500" : ""
+                                errors.price && touched.price
+                                  ? "border-red-500"
+                                  : ""
                               }`}
                             />
                             {errors.price && touched.price && (
@@ -252,7 +282,10 @@ export function ProductAddPage() {
                             )}
                           </div>
                           <div>
-                            <Label htmlFor="stock" className="text-sm font-medium">
+                            <Label
+                              htmlFor="stock"
+                              className="text-sm font-medium"
+                            >
                               Stock
                             </Label>
                             <Field
@@ -262,7 +295,9 @@ export function ProductAddPage() {
                               name="stock"
                               placeholder="Enter stock quantity"
                               className={`mt-1 ${
-                                errors.stock && touched.stock ? "border-red-500" : ""
+                                errors.stock && touched.stock
+                                  ? "border-red-500"
+                                  : ""
                               }`}
                             />
                             {errors.stock && touched.stock && (
@@ -338,7 +373,10 @@ export function ProductAddPage() {
                             )}
                           </div>
                           <div>
-                            <Label htmlFor="color" className="text-sm font-medium">
+                            <Label
+                              htmlFor="color"
+                              className="text-sm font-medium"
+                            >
                               Color
                             </Label>
                             <Select
@@ -376,7 +414,10 @@ export function ProductAddPage() {
 
                       <div className="col-span-1 space-y-6">
                         <div>
-                          <Label htmlFor="images" className="text-sm font-medium">
+                          <Label
+                            htmlFor="images"
+                            className="text-sm font-medium"
+                          >
                             Product Images
                           </Label>
                           <div className="mt-1 flex items-center justify-center border-2 border-dashed border-gray-600 rounded-lg p-4">
@@ -393,7 +434,9 @@ export function ProductAddPage() {
                                 type="file"
                                 accept="image/*"
                                 multiple
-                                onChange={(e) => handleImageUpload(e.target.files)}
+                                onChange={(e) =>
+                                  handleImageUpload(e.target.files)
+                                }
                                 className="hidden"
                               />
                             </label>

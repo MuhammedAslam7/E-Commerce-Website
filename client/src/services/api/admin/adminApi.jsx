@@ -205,6 +205,12 @@ export const adminApi = createApi({
         method: "POST",
         body: {values}
       })
+    }),
+    getCoupons: builder.query({
+      query: () => ({
+        url: "admin/coupons/all-coupons",
+        method: "GET" 
+      })
     })
   }),
 });
@@ -236,5 +242,6 @@ export const {
   useGetSalesQuery,
   useGetReturnOrdersQuery,
   useUpdateReturnStatusMutation,
-  useAddCouponMutation
+  useAddCouponMutation,
+  useGetCouponsQuery
 } = adminApi;

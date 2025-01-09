@@ -7,10 +7,12 @@ import { Switch } from "@/components/ui/switch";
 import { Badge, Edit, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGetCouponsQuery } from "@/services/api/admin/adminApi";
 
 export const CouponPage = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const navigate = useNavigate();
+  const { data: coupons, isLoading } = useGetCouponsQuery();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
@@ -20,6 +22,13 @@ export const CouponPage = () => {
     return new Date(date).toLocaleDateString();
   };
 
+  const formatAmount = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR'
+    }).format(amount);
+  };
+
   return (
     <div className={`flex min-h-screen ${isDarkMode ? "dark" : ""}`}>
       <SidebarAdmin />
@@ -27,7 +36,7 @@ export const CouponPage = () => {
         <NavbarAdmin 
           isDarkMode={isDarkMode}
           setIsDarkMode={setIsDarkMode}
-          pageName="OFFER PAGE" 
+          pageName="COUPON PAGE" 
         />
         
         <div className="p-6 space-y-8">
@@ -43,72 +52,63 @@ export const CouponPage = () => {
           <Card className="shadow-lg">
             <CardHeader className="bg-gray-50 dark:bg-gray-800">
               <CardTitle className="text-xl text-gray-800 dark:text-gray-200">
-                Offer List
+                Coupon List
               </CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-orange-600 uppercase">Title</TableHead>
-                    <TableHead className="text-orange-600 uppercase">Discount</TableHead>
-                    <TableHead className="text-orange-600 uppercase">Duration</TableHead>
+                    <TableHead className="text-orange-600 uppercase">Coupon Code</TableHead>
+                    <TableHead className="text-orange-600 uppercase">Discount Amount</TableHead>
+                    <TableHead className="text-orange-600 uppercase">Min Purchase</TableHead>
+                    <TableHead className="text-orange-600 uppercase">Expiration Date</TableHead>
                     <TableHead className="text-orange-600 uppercase">Status</TableHead>
-                    <TableHead className="text-orange-600 uppercase">Products</TableHead>
-                    <TableHead className="text-orange-600 uppercase">Categories</TableHead>
+                    <TableHead className="text-orange-600 uppercase">Used Count</TableHead>
                     <TableHead className="text-right text-orange-600 uppercase">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {/* {offers?.map((offer) => (
-                    <TableRow key={offer._id}>
-                      <TableCell className="font-medium">{offer.title}</TableCell>
-                      <TableCell>
-                        {offer.discountValue}
-                        {offer.discountType === 'percentage' ? '%' : ' Rs'}
-                      </TableCell>
-                      <TableCell>
-                        {formatDate(offer.startDate)} - {formatDate(offer.endDate)}
-                      </TableCell>
+                  {coupons?.map((coupon) => (
+                    <TableRow key={coupon._id}>
+                      <TableCell className="font-medium">{coupon.couponCode}</TableCell>
+                      <TableCell>{formatAmount(coupon.discountAmount)}</TableCell>
+                      <TableCell>{formatAmount(coupon.minPurchaseAmount)}</TableCell>
+                      <TableCell>{formatDate(coupon.expirationDate)}</TableCell>
                       <TableCell>
                         <Badge
-                          variant={offer.listed ? "success" : "secondary"}
+                          variant={coupon.listed ? "success" : "secondary"}
                           className={`font-semibold ${
-                            offer.listed ? "bg-green-600" : "bg-red-600"
+                            coupon.listed ? "bg-green-600" : "bg-red-600"
                           }`}
                         >
-                          {offer.listed ? "Active" : "Inactive"}
+                          {coupon.listed ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        {offer.products.map(product => product.productName).join(", ")}
-                      </TableCell>
-                      <TableCell>
-                        {offer.categories.map(category => category.name).join(", ")}
-                      </TableCell>
+                      <TableCell>{coupon.usedUsersId?.length || 0}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end space-x-2">
                           <Button
                             variant="outline"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => navigate(`/admin/offers/edit/${offer._id}`)}
+                            onClick={() => navigate(`/admin/coupons/edit/${coupon._id}`)}
                           >
                             <Edit className="h-4 w-4" />
-                            <span className="sr-only">Edit offer</span>
+                            <span className="sr-only">Edit coupon</span>
                           </Button>
                           <Switch
-                            checked={offer.listed}
+                            checked={coupon.listed}
                             className="data-[state=checked]:bg-green-500"
                           >
                             <span className="sr-only">
-                              {offer.listed ? "Deactivate offer" : "Activate offer"}
+                              {coupon.listed ? "Deactivate coupon" : "Activate coupon"}
                             </span>
                           </Switch>
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))} */}
+                  ))}
                 </TableBody>
               </Table>
             </CardContent>

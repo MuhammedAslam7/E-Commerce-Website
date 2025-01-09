@@ -547,18 +547,22 @@ export const paymentPage =async(req, res) => {
 
   const coupon = await Coupon.findOne().sort({createdAt: -1})
   let value
+  let minAmount
   if(coupon) {
 
     const couponUsed = coupon.usedUsersId.find((id) => id.toString() == userId)
     if(couponUsed) {
       value = "used"
+      minAmount = null
     } else {
       value = coupon.discountAmount
+      minAmount = coupon.minPurchaseAmount
     }
   
 
   } else {
     value = "noCoupon"
+    minAmount = null
   }
 
   const wallet = await Wallet.findOne({userId})
@@ -566,7 +570,7 @@ export const paymentPage =async(req, res) => {
   const walletBalance = wallet.balance
 
   
-  res.status(200).json({cart, value, walletBalance})
+  res.status(200).json({cart, value, walletBalance, minAmount})
   } catch (error) {
     res.status(500).json({message: "Server Error"})
     

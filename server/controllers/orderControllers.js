@@ -414,7 +414,7 @@ export const placeOrder = async (req, res) => {
     }
     if (paymentMethod == "razorpay") {
       const options = {
-        amount: totalPrice * 100,
+        amount: (totalPrice - totalDiscount) * 100,
         currency: "INR",
         receipt: "receipt_" + Math.random().toString(36).substring(7),
       };
@@ -497,6 +497,9 @@ export const razorPayPayment = async (req, res) => {
     const { userId } = req.user;
 
     const {
+      totalPrice,
+      totalDiscount,
+      couponUsed,
       addressId,
       paymentMethod,
       razorpayOrderId,
@@ -504,6 +507,9 @@ export const razorPayPayment = async (req, res) => {
       razorpaySignature,
     } = req.body;
     console.log(
+      totalPrice,
+      totalDiscount,
+      couponUsed,
       addressId,
       paymentMethod,
       razorpayOrderId,
@@ -545,7 +551,8 @@ export const razorPayPayment = async (req, res) => {
       userId,
       addressId,
       paymentMethod,
-      payableAmount,
+      payableAmount: totalPrice - totalDiscount,
+      totalDiscount,
       paymentId: razorpayPaymentId,
       paymentStatus: "Paid",
       orderStatus: "Pending",
@@ -622,7 +629,7 @@ export const orderDetails = async (req, res) => {
         return {
           productId: product.productId._id,
           productName: product.productId.productName,
-          price: product.productId.price,
+          price: product.productId.discountedPrice ? product.productId.discountedPrice : product.productId.price,
           quantity: product.quantity,
           itemStatus: product.itemStatus,
           itemId: product._id,

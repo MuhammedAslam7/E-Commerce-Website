@@ -24,6 +24,7 @@ export function PaymentPage() {
   const {data, isLoading, refetch} = useGetPaymentPageQuery()
 
   let {totalPrice} = data?.cart || {}
+  const minAmount = data?.minAmount
   const walletBalance = data?.walletBalance || 0
 
   let { selectedAddress, } =
@@ -100,6 +101,9 @@ export function PaymentPage() {
           handler: async function (response) {
             try {
               await razorpayPayment({
+                totalPrice,
+                totalDiscount,
+                couponUsed,
                 addressId: selectedAddress._id,
                 paymentMethod: "razorpay",
                 razorpayPaymentId: response.razorpay_payment_id,
@@ -213,7 +217,7 @@ export function PaymentPage() {
         </div>
 
         {/* Add Coupon Button with Value */}
-        {typeof value === "number" && (
+        {typeof value === "number" && (totalPrice - totalDiscount) > minAmount &&(
           <div className="border rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-600">Available Coupon Discount</span>
