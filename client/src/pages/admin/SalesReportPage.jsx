@@ -24,6 +24,7 @@ import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, 
 import { cn } from "@/lib/utils";
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 export function SalesReportPage() {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -98,7 +99,9 @@ export function SalesReportPage() {
 
   const downloadPDF = useCallback(() => {
     const doc = new jsPDF();
+    
     const tableColumn = ["Order ID", "Date", "Customer", "Amount", "Payment Status"];
+    
     const tableRows = sales.map(sale => [
       sale._id,
       sale.orderAt ? format(new Date(sale.orderAt), "PPP") : "Invalid date",
@@ -106,22 +109,54 @@ export function SalesReportPage() {
       sale.payableAmount,
       sale.paymentStatus
     ]);
-
-    doc.setFontSize(20);
-    doc.text("Sales Report", 14, 15);
+  
+    doc.setFontSize(30);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0, 102, 204); 
+    doc.text("Dune Audio", 30, 31);
+  
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0); 
+    doc.text("Sales Report", 14, 45);
+  
     doc.setFontSize(10);
-    doc.text(`Generated on: ${format(new Date(), "PPP")}`, 14, 25);
-    doc.text(`Total Revenue: ${totalRevenue}`, 14, 35);
-    doc.text(`Total Orders: ${ordersCount}`, 14, 45);
-    doc.text(`Total Customers: ${customers}`, 14, 55);
-
+    doc.setTextColor(0, 0, 0); 
+    doc.text(`Generated on: ${format(new Date(), "PPP")}`, 14, 55);
+    doc.text(`Total Revenue: ${totalRevenue}`, 14, 65);
+    doc.text(`Total Orders: ${ordersCount}`, 14, 75);
+    doc.text(`Total Customers: ${customers}`, 14, 85);
+  
     doc.autoTable({
       head: [tableColumn],
       body: tableRows,
-      startY: 65,
+      startY: 95,
     });
-
+  
     doc.save(`sales_report_${format(new Date(), "yyyy-MM-dd")}.pdf`);
+  }, [sales, totalRevenue, ordersCount, customers]);
+
+  const downloadExcel = useCallback(() => {
+    const worksheet = XLSX.utils.json_to_sheet(sales.map(sale => ({
+      'Order ID': sale._id,
+      'Date': sale.orderAt ? format(new Date(sale.orderAt), "PPP") : "Invalid date",
+      'Customer': sale.userDetails?.username,
+      'Amount': sale.payableAmount,
+      'Payment Status': sale.paymentStatus
+    })));
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sales");
+
+    XLSX.utils.sheet_add_aoa(worksheet, [
+      ["Dune Audio - Sales Report"],
+      [`Generated on: ${format(new Date(), "PPP")}`],
+      [`Total Revenue: ${totalRevenue}`],
+      [`Total Orders: ${ordersCount}`],
+      [`Total Customers: ${customers}`],
+      []
+    ], { origin: "A1" });
+
+    XLSX.writeFile(workbook, `sales_report_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
   }, [sales, totalRevenue, ordersCount, customers]);
 
   if (isLoading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
@@ -173,6 +208,12 @@ export function SalesReportPage() {
                 className="bg-green-500 hover:bg-green-600 text-white"
               >
                 Download PDF Report
+              </Button>
+              <Button 
+                onClick={downloadExcel}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                Download Excel Report
               </Button>
             </div>
 

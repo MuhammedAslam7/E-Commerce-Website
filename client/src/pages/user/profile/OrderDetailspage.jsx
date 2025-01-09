@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, Printer } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, FileSpreadsheet } from 'lucide-react';
 import {
   useOrderByIdQuery,
   useCancelOrderMutation,
@@ -25,6 +25,8 @@ import { FooterUser } from "@/components/user/layouts/FooterUser";
 import { ConfirmationModal } from "@/components/user/modals/ConfirmationModal";
 import { Input } from "@/components/ui/input";
 import { useFormik } from "formik";
+import { jsPDF } from "jspdf";
+import * as XLSX from "xlsx";
 
 export const OrderDetailsPage = () => {
   const { orderId } = useParams();
@@ -51,8 +53,104 @@ export const OrderDetailsPage = () => {
     setIsProductsExpanded(!isProductsExpanded);
   };
 
-  const handlePrint = () => {
-    window.print();
+  const downloadAsPDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    let yPos = 20;
+
+    // Header
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text("Dune Audio", pageWidth / 2, yPos, { align: "center" });
+    yPos += 10;
+
+    doc.setFontSize(16);
+    doc.text("Invoice", pageWidth / 2, yPos, { align: "center" });
+    yPos += 20;
+
+    // Order details
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Order ID: ${order.orderId}`, 20, yPos);
+    yPos += 10;
+    doc.text(`Order Date: ${format(new Date(order.orderAt), "PPpp")}`, 20, yPos);
+    yPos += 10;
+    doc.text(`Status: ${order.orderStatus}`, 20, yPos);
+    yPos += 20;
+
+    // Customer details
+    doc.setFont("helvetica", "bold");
+    doc.text("Customer Details", 20, yPos);
+    yPos += 10;
+    doc.setFont("helvetica", "normal");
+    doc.text(`Name: ${order.address.fullName}`, 20, yPos);
+    yPos += 10;
+    doc.text(`Email: ${order.address.email}`, 20, yPos);
+    yPos += 10;
+    doc.text(`Phone: ${order.address.phone}`, 20, yPos);
+    yPos += 10;
+    doc.text(`Address: ${order.address.landMark}, ${order.address.city}, ${order.address.state} ${order.address.pincode}`, 20, yPos);
+    yPos += 20;
+
+    // Products table
+    doc.setFont("helvetica", "bold");
+    doc.text("Products", 20, yPos);
+    yPos += 10;
+    doc.setFontSize(10);
+    doc.text("Product", 20, yPos);
+    doc.text("Quantity", 100, yPos);
+    doc.text("Price", 140, yPos);
+    doc.text("Total", 180, yPos);
+    yPos += 10;
+
+    doc.setFont("helvetica", "normal");
+    order.products.forEach((product) => {
+      doc.text(product.productName, 20, yPos);
+      doc.text(product.quantity.toString(), 100, yPos);
+      doc.text(`₹${product.price.toFixed(2)}`, 140, yPos);
+      doc.text(`₹${(product.price * product.quantity).toFixed(2)}`, 180, yPos);
+      yPos += 10;
+    });
+
+    yPos += 10;
+    doc.setFont("helvetica", "bold");
+    doc.text(`Total Amount: ₹${order.payableAmount.toFixed(2)}`, 140, yPos);
+
+    doc.save(`Dune_Audio_Invoice_${order.orderId}.pdf`);
+  };
+
+  const downloadAsExcel = () => {
+    const wb = XLSX.utils.book_new();
+    const wsData = [
+      ["Dune Audio"],
+      ["Invoice"],
+      [],
+      ["Order Details"],
+      ["Order ID", order.orderId],
+      ["Order Date", format(new Date(order.orderAt), "PPpp")],
+      ["Status", order.orderStatus],
+      [],
+      ["Customer Details"],
+      ["Name", order.address.fullName],
+      ["Email", order.address.email],
+      ["Phone", order.address.phone],
+      ["Address", `${order.address.landMark}, ${order.address.city}, ${order.address.state} ${order.address.pincode}`],
+      [],
+      ["Products"],
+      ["Product", "Quantity", "Price", "Total"],
+      ...order.products.map(product => [
+        product.productName,
+        product.quantity,
+        `₹${product.price.toFixed(2)}`,
+        `₹${(product.price * product.quantity).toFixed(2)}`
+      ]),
+      [],
+      ["Total Amount", `₹${order.payableAmount.toFixed(2)}`]
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, "Invoice");
+    XLSX.writeFile(wb, `Dune_Audio_Invoice_${order.orderId}.xlsx`);
   };
 
   const cancelConfirm = async () => {
@@ -85,41 +183,34 @@ export const OrderDetailsPage = () => {
     initialValues: {
       returnReason: "",
     },
-
     validate: (values) => {
       const errors = {};
-
       if (!values.returnReason) {
-        errors.returnReason = "This field is  required";
+        errors.returnReason = "This field is required";
       } else if (values.returnReason.length < 10) {
-        errors.returnReason = "Must be atleast 10 characters";
+        errors.returnReason = "Must be at least 10 characters";
       }
       return errors;
     },
     onSubmit: (values) => {
-      console.log(values)
-      setReturnItemModal(true)
-    
+      console.log(values);
+      setReturnItemModal(true);
     },
   });
 
-
   const handleReturnConfirm = async () => {
     try {
-      
       await returnItem({
         orderId: order.orderId,
         itemId: currentReturnItem.itemId,
         returnReason: formik.values.returnReason
       }).unwrap();
       setReturnItemModal(false);
-      setReturnFieldOpenId(null)
+      setReturnFieldOpenId(null);
     } catch (error) {
       console.log(error);
     }
   };
-
-
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -136,11 +227,12 @@ export const OrderDetailsPage = () => {
       case "return requested":
         return "bg-orange-200 text-orange-800";
       case "returned":
-        return "bg-orange-500 text-white"
+        return "bg-orange-500 text-white";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -172,13 +264,22 @@ export const OrderDetailsPage = () => {
                   : "Cancel Order"}
               </Button>
               <Button
-                onClick={handlePrint}
+                onClick={downloadAsPDF}
                 variant="outline"
                 size="sm"
                 className="flex items-center"
               >
-                <Printer className="mr-2 h-4 w-4" />
-                Print
+                <FileText className="mr-2 h-4 w-4" />
+                PDF
+              </Button>
+              <Button
+                onClick={downloadAsExcel}
+                variant="outline"
+                size="sm"
+                className="flex items-center"
+              >
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Excel
               </Button>
             </div>
           </CardHeader>
@@ -366,7 +467,6 @@ export const OrderDetailsPage = () => {
                                     )}
                                 </div>
                                 <Button
-                                  
                                   className="w-13 h-7"
                                   type="submit"
                                 >
@@ -438,3 +538,4 @@ export const OrderDetailsPage = () => {
     </div>
   );
 };
+

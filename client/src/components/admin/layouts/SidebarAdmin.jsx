@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BiSolidOffer } from "react-icons/bi"
+import { RiCoupon2Fill } from "react-icons/ri"
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -13,6 +14,7 @@ import {
   FileText,
   Grid,
   Tag,
+  
 
 } from "lucide-react";
 
@@ -24,8 +26,8 @@ const navItems = [
   { icon: Users, label: "Users", href: "/admin/users" },
   { icon: ShoppingCart, label: "Orders", href: "/admin/orders" },
   { icon: BiSolidOffer, label: "Offers", href: "/admin/offers" },
-  { icon: DollarSign, label: "Returns", href: "/admin/returns" },
-  { icon: Star, label: "Reviews", href: "#" },
+  { icon: Truck, label: "Returns", href: "/admin/returns" },
+  { icon: RiCoupon2Fill, label: "Coupons", href: "/admin/coupons" },
 ];
 
 export function SidebarAdmin() {

@@ -8,6 +8,7 @@ import crypto from "crypto";
 import { razorpayInstance } from "../utils/razorPay.js";
 import mongoose from "mongoose";
 import { Wallet } from "../model/walletSchema.js";
+import { Coupon } from "../model/couponSchema.js";
 
 ////////////////////////////////////////////////////////////
 //admin
@@ -319,12 +320,12 @@ export const placeOrder = async (req, res) => {
   if (!userId) {
     return res.status(404).json({ message: "User is not valid" });
   }
-  const { addressId, paymentMethod, totalPrice } = req.body;
+
+  const { addressId, paymentMethod, totalPrice, totalDiscount, couponUsed } = req.body;
 
   try {
-    if (paymentMethod == "cash on delivery") {
+    if (paymentMethod == "cash on delivery" || paymentMethod == "pay from wallet") {
       const user = await User.findById(userId);
-      console.log(user);
 
       const address = await Address.findOne({ _id: addressId, userId });
       if (!address)
@@ -354,8 +355,9 @@ export const placeOrder = async (req, res) => {
         userId,
         addressId,
         paymentMethod,
-        payableAmount: payableAmount - cart.totalDiscount,
-        totalDiscount: cart.totalDiscount,
+        payableAmount: payableAmount - totalDiscount,
+        totalDiscount: totalDiscount,
+        paymentStatus: paymentMethod == "pay from wallet" ? "Paid" : "Pending",
         products,
       });
 
@@ -379,11 +381,32 @@ export const placeOrder = async (req, res) => {
 
       await newOrder.save();
 
+      if(paymentMethod == "pay from wallet") {
+        const wallet = await Wallet.findOne({userId: userId}).sort({createdAt: 1})
+
+        wallet.balance -= totalPrice - totalDiscount
+
+        await wallet.save()
+      }
+      if(couponUsed) {
+        console.log("Coupon used")
+        const coupon = await Coupon.findOne().sort({createdAt: -1})
+  
+        if(coupon) {
+          coupon.usedUsersId.push(userId)
+  
+          await coupon.save()
+      }
+
+      }
+
+
       // cart.items = [];
       // cart.totalPrice = 0;
+      // cart.totalDiscount = 0;
 
       await cart.save();
-
+      
       res.status(201).json({
         message: "Order placed successfully",
         order: newOrder,
@@ -428,7 +451,7 @@ export const myOrders = async (req, res) => {
             return {
               productId: product.productId._id,
               productName: product.productId.productName,
-              price: product.productId.price,
+              price: product.productId.discountedPrice ? product.productId.discountedPrice : product.productId.price,
               quantity: product.quantity,
               itemStatus: product.itemStatus,
               variant: variant
@@ -551,6 +574,7 @@ export const razorPayPayment = async (req, res) => {
 
     // cart.items = [];
     // cart.totalPrice = 0;
+    // cart.totalDiscount = 0;
     await cart.save();
     res.status(200).json({
       message: "Order placed successfully",

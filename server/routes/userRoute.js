@@ -8,6 +8,7 @@ import {
   deleteCartItem,
   getAddress,
   getBrandCategory,
+  paymentPage,
   productPage,
   productsForSearch,
   profileDetails,
@@ -20,7 +21,7 @@ import { verifyRole, verifyToken } from "../middewares/jwt-verify.js";
 import { getProductById } from "../controllers/productController.js";
 import { cancelItem, cancelOrder, myOrders, orderDetails, placeOrder, razorPayPayment, returnItem } from "../controllers/orderControllers.js";
 import { addToWishlist, removeWishlistItem, wishlist } from "../controllers/wishlistController.js";
-import { getWallet } from "../controllers/walletController.js";
+import { addMoneyToWallet, getWallet, verifyPayment } from "../controllers/walletController.js";
 const router = express.Router();
 
 router.get("/home", verifyToken, userHome);
@@ -32,6 +33,7 @@ router.put("/update-quantity", verifyToken, updateCartQuantity);
 router.delete("/delete-cartitem", verifyToken, deleteCartItem);
 router.get("/category-brand", verifyToken, getBrandCategory);
 router.get("/items-for-search", verifyToken, productsForSearch);
+router.get("/payment-page", verifyToken, paymentPage);
 
 router.post("/add-address", verifyToken, addAddress);
 router.get("/address", verifyToken, getAddress);
@@ -58,5 +60,7 @@ router.delete("/wishlist-remove-item", verifyToken, removeWishlistItem)
 
 
 router.get("/wallet", verifyToken, getWallet)
+router.post("/wallet/add-money", verifyToken, addMoneyToWallet)
+router.post("/wallet/verify-payment", verifyToken, verifyPayment)
 
 export default router;

@@ -32,10 +32,13 @@ export const CartPage = () => {
   const [removeCartItem] = useRemoveCartItemMutation();
   const [products, setProducts] = useState([]);
   const { items = [], totalPrice, totalDiscount } = cartData || {};
+  const [isStockAvailable, setIsStockAvailable] = useState(true);
 
   useEffect(() => {
     if (items?.length > 0) {
       setProducts(items);
+      const hasOutOfStock = items.some((item) => item.variant.stock === 0);
+      setIsStockAvailable(!hasOutOfStock);
     }
   }, [items]);
 
@@ -273,9 +276,10 @@ export const CartPage = () => {
                     size="lg"
                     onClick={() =>
                       navigate("/checkout-page", {
-                        state: { totalPrice: totalPrice, totalDiscount },
+                        state: { totalPrice: totalPrice, totalDiscount, },
                       })
                     }
+                    disabled={!isStockAvailable}
                   >
                     Proceed to Checkout
                   </Button>

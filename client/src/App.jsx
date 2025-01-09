@@ -39,6 +39,8 @@ import { SalesReportPage } from "./pages/admin/SalesReportPage";
 import { WishListPage } from "./pages/user/WishListPage";
 import { WalletPage } from "./pages/user/profile/WalletPage";
 import { ReturnItemsPage } from "./pages/admin/ReturnItemsPage";
+import { CouponPage } from "./pages/admin/CouponPage";
+import { CouponAddPage } from "./pages/admin/CouponAddPage";
 
 const App = () => {
   return (
@@ -119,6 +121,8 @@ const App = () => {
           <Route path="/admin/offers/add-offer" element={<OfferAddPage />} />
           <Route path="/admin/sales-report" element={<SalesReportPage />} />
           <Route path="/admin/returns" element={<ReturnItemsPage />} />
+          <Route path="/admin/coupons" element={<CouponPage />} />
+          <Route path="/admin/coupons/add-coupon" element={<CouponAddPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

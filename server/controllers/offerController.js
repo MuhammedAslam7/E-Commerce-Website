@@ -124,25 +124,14 @@ export const addOffer = async (req, res) => {
 };
 
 ///////////////////////////////////////////////////////////
-export const getActiveOffers = async (req, res) => {
+export const getOffers = async (req, res) => {
   try {
-    const currentDate = new Date();
-    const offers = await Offer.find({
-      startDate: { $lte: currentDate },
-      endDate: { $gte: currentDate },
-      listed: true,
-    }).populate("products categories");
-
-    res.status(200).json({
-      success: true,
-      offers,
-    });
+    const offers = await Offer.find()
+      .populate('products', 'productName price')
+      .populate('categories', 'name');
+    res.status(200).json(offers);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error fetching offers",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Failed to fetch offers" });
   }
 };
 

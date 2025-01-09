@@ -5,7 +5,7 @@ const offerApi = adminApi.injectEndpoints({
     endpoints:(builder)=>({
         getOffers:builder.query({
             query:()=>({
-                url:'admin/offers',
+                url:'admin/offers/all-offers',
                 method:"GET"
             }),
             providesTags:['Offers']

@@ -198,6 +198,13 @@ export const adminApi = createApi({
         body: {orderId, itemId, result}
       }),
       invalidatesTags:["Return"]
+    }),
+    addCoupon: builder.mutation({
+      query: (values) => ({
+        url: "admin/coupons/add-coupon",
+        method: "POST",
+        body: {values}
+      })
     })
   }),
 });
@@ -228,5 +235,6 @@ export const {
   useDashboardQuery,
   useGetSalesQuery,
   useGetReturnOrdersQuery,
-  useUpdateReturnStatusMutation
+  useUpdateReturnStatusMutation,
+  useAddCouponMutation
 } = adminApi;

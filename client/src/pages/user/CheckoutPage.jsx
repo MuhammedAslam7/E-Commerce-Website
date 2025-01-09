@@ -101,7 +101,7 @@ export function CheckoutPage() {
         "#f97316"
       );
     }
-    navigate("/payment-page", { state: { selectedAddress, totalPrice, totalDiscount } });
+    navigate("/payment-page", { state: { selectedAddress, totalPrice, totalDiscount} });
   };
 
   if (isLoading) {

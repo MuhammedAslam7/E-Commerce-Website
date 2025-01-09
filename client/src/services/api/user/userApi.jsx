@@ -11,7 +11,8 @@ export const userApi = createApi({
     "Profile",
     "ProductDetails",
     "MyOrders",
-    "Wishlist"
+    "Wishlist",
+    "Wallet"
   ],
   endpoints: (builder) => ({
     userHome: builder.query({
@@ -48,6 +49,13 @@ export const userApi = createApi({
         method: "GET",
       }),
       providesTags: ["Cart"],
+    }),
+    getPaymentPage: builder.query({
+      query: () => ({
+        url: "user/payment-page",
+        method: "GET",
+
+      })
     }),
     updateCartQuantity: builder.mutation({
       query: ({ productId, variantId, newQuantity }) => ({
@@ -120,10 +128,10 @@ export const userApi = createApi({
       invalidatesTags: ["Profile"],
     }),
     addOrder: builder.mutation({
-      query: ({ addressId, paymentMethod, totalPrice, totalDiscount }) => ({
+      query: ({ addressId, paymentMethod, totalPrice, totalDiscount, couponUsed }) => ({
         url: "user/place-order",
         method: "POST",
-        body: { addressId, paymentMethod, totalPrice, totalDiscount },
+        body: { addressId, paymentMethod, totalPrice, totalDiscount, couponUsed },
       }),
       invalidatesTags: ["ProductDetails", "Cart", "MyOrders"],
     }),
@@ -211,8 +219,24 @@ export const userApi = createApi({
       query: () => ({
         url: "user/wallet",
         method: "GET",
-      })
-    })
+      }),
+      providesTags: ["Wallet"]
+    }),
+    addMoneyToWallet: builder.mutation({
+      query: (amount) => ({
+        url: '/user/wallet/add-money',
+        method: 'POST',
+        body: { amount },
+      }),
+    }),
+    verifyPayment: builder.mutation({
+      query: (paymentDetails) => ({
+        url: '/user/wallet/verify-payment',
+        method: 'POST',
+        body: paymentDetails,
+      }),
+      invalidatesTags: ['Wallet'],
+    }),
   }),
 });
 
@@ -222,6 +246,7 @@ export const {
   useProductsListQuery,
   useAddToCartMutation,
   useCartProductsQuery,
+  useGetPaymentPageQuery,
   useUpdateCartQuantityMutation,
   useRemoveCartItemMutation,
   useAddAddressMutation,
@@ -243,6 +268,8 @@ export const {
   useAddToWishlistMutation,
   useGetWishlistQuery,
   useRemoveWishlistItemMutation,
-  useGetWalletQuery
+  useGetWalletQuery,
+  useAddMoneyToWalletMutation,
+  useVerifyPaymentMutation
 
 } = userApi;

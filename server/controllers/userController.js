@@ -5,6 +5,8 @@ import User from "../model/userModel.js";
 import bcryptjs from "bcryptjs";
 import { Category } from "../model/category.js";
 import { Brand } from "../model/brand.js";
+import { Wallet } from "../model/walletSchema.js";
+import { Coupon } from "../model/couponSchema.js";
 
 export const userHome = async (req, res) => {
   try {
@@ -208,12 +210,13 @@ export const cartItems = async (req, res) => {
       };
     });
 
+
     res.status(200).json({
       cartId: cart._id,
       userId: cart.userId,
       items,
       totalPrice: cart.totalPrice,
-      totalDiscount: cart.totalDiscount
+      totalDiscount: cart.totalDiscount,
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
@@ -526,6 +529,46 @@ export const productsForSearch = async(req, res) => {
     res.status(200).json({allProducts})
   } catch (error) {
     console.log(error)
+    
+  }
+}
+////////////////////////////////////////////////////////////////////
+export const paymentPage =async(req, res) => {
+  try {
+    const {userId} = req.user
+    if(!userId) {
+      return res.status(404).json({message: "User is not valid"})
+    }
+
+    const cart = await Cart.findOne({userId})
+  if(!cart) {
+    return res.status(404).json({message: "no cart found"})
+  }
+
+  const coupon = await Coupon.findOne().sort({createdAt: -1})
+  let value
+  if(coupon) {
+
+    const couponUsed = coupon.usedUsersId.find((id) => id.toString() == userId)
+    if(couponUsed) {
+      value = "used"
+    } else {
+      value = coupon.discountAmount
+    }
+  
+
+  } else {
+    value = "noCoupon"
+  }
+
+  const wallet = await Wallet.findOne({userId})
+
+  const walletBalance = wallet.balance
+
+  
+  res.status(200).json({cart, value, walletBalance})
+  } catch (error) {
+    res.status(500).json({message: "Server Error"})
     
   }
 }
