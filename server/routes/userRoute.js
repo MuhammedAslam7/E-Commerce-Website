@@ -4,6 +4,7 @@ import {
   addToCart,
   cartItems,
   changePassword,
+  checkoutPage,
   deleteAddress,
   deleteCartItem,
   getAddress,
@@ -16,6 +17,7 @@ import {
   updateCartQuantity,
   updateProfile,
   userHome,
+  verifyStock,
 } from "../controllers/userController.js";
 import { verifyRole, verifyToken } from "../middewares/jwt-verify.js";
 import { getProductById } from "../controllers/productController.js";
@@ -33,6 +35,8 @@ router.put("/update-quantity", verifyToken, updateCartQuantity);
 router.delete("/delete-cartitem", verifyToken, deleteCartItem);
 router.get("/category-brand", verifyToken, getBrandCategory);
 router.get("/items-for-search", verifyToken, productsForSearch);
+router.get("/verify-stock",verifyToken,  verifyStock)
+router.get("/checkout-page", verifyToken, checkoutPage)
 router.get("/payment-page", verifyToken, paymentPage);
 
 router.post("/add-address", verifyToken, addAddress);

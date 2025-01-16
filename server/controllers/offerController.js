@@ -2,26 +2,19 @@ import { Category } from "../model/category.js";
 import { Offer } from "../model/offerSchema.js";
 import { Order } from "../model/orderSchema.js";
 
-import {Product} from '../model/product.js'
+import { Product } from "../model/product.js";
 
-
-export const getProductAndCategories = async(req,res)=>{
-  
+export const getProductAndCategories = async (req, res) => {
   try {
-    const products = await Product.find()
+    const products = await Product.find();
 
-    const categories = await Category.find()
+    const categories = await Category.find();
 
-    res.status(200).json({products, categories})
-    
+    res.status(200).json({ products, categories });
   } catch (error) {
-    res.status(500).json({message: "Internal server error"})
-    
+    res.status(500).json({ message: "Internal server error" });
   }
-  
-}
-
-
+};
 
 export const addOffer = async (req, res) => {
   try {
@@ -62,29 +55,7 @@ export const addOffer = async (req, res) => {
 
     await offer.save();
 
-    if (applicationType === "category") {
-      const products = await Product.find({
-        category: { $in: categoryId },
-        listed: true,
-      });
-
-      await Promise.all(
-        products.map(async (product) => {
-          let discountedPrice;
-
-          if (discountType === "percentage") {
-            discountedPrice = Math.ceil((product.price * (100 - discountValue)) / 100);
-          } else if (discountType === "flat") {
-            discountedPrice = Math.ceil(product.price - discountValue);
-          }
-
-          await Product.updateOne(
-            { _id: product._id },
-            { $set: { discountedPrice }, $push: { offers: offer._id } }
-          );
-        })
-      );
-    } else {
+    if (applicationType == "product") {
       const products = await Product.find({
         _id: { $in: productId },
         listed: true,
@@ -92,18 +63,20 @@ export const addOffer = async (req, res) => {
 
       await Promise.all(
         products.map(async (product) => {
-          let discountedPrice;
+          product.offers.push(offer._id);
+          await product.save();
+        })
+      );
+    } else {
+      const products = await Product.find({
+        category: { $in: categoryId },
+        listed: true,
+      });
 
-          if (discountType === "percentage") {
-            discountedPrice = Math.ceil((product.price * (100 - discountValue)) / 100);
-          } else if (discountType === "flat") {
-            discountedPrice = Math.ceil(product.price - discountValue);
-          }
-
-          await Product.updateOne(
-            { _id: product._id },
-            { $set: { discountedPrice }, $push: { offers: offer._id } }
-          );
+      await Promise.all(
+        products.map(async (product) => {
+          product.offers.push(offer._id);
+          await product.save();
         })
       );
     }
@@ -111,7 +84,6 @@ export const addOffer = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Offer created successfully",
-      offer,
     });
   } catch (error) {
     console.error("Error in addOffer:", error);
@@ -122,34 +94,170 @@ export const addOffer = async (req, res) => {
     });
   }
 };
+///////////////////////////////////////////////////////////////
+export const updateOffer = async (req, res) => {
+  try {
+    const { id, values } = req.body;
 
+    const offer = await Offer.findById(id);
+    if (!offer) {
+      return res.status(404).json({ message: "Offer not found" });
+    }
+
+    await Product.updateMany(
+      { offers: offer._id },
+      { $pull: { offers: offer._id } }
+    );
+
+    const updatedOffer = await Offer.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          title: values.title,
+          description: values.description,
+          discountType: values.discountType,
+          discountValue: values.discountValue,
+          startDate: new Date(values.startDate),
+          endDate: new Date(values.endDate),
+          products: values.applicationType === "product" ? values.productId : [],
+          categories: values.applicationType === "category" ? values.categoryId : [],
+        },
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedOffer) {
+      return res.status(404).json({ message: "Offer not found after update" });
+    }
+
+    const productsToUpdate =
+      values.applicationType === "product"
+        ? await Product.find({
+            _id: { $in: values.productId },
+            listed: true,
+          })
+        : await Product.find({
+            category: { $in: values.categoryId },
+            listed: true,
+          });
+
+    await Promise.all(
+      productsToUpdate.map(async (product) => {
+        product.offers.push(updatedOffer._id);
+        await product.save();
+      })
+    );
+
+    res.status(200).json({ message: "Offer successfully updated", updatedOffer });
+  } catch (error) {
+    console.error("Error updating offer:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 ///////////////////////////////////////////////////////////
 export const getOffers = async (req, res) => {
   try {
     const offers = await Offer.find()
-      .populate('products', 'productName price')
-      .populate('categories', 'name');
+      .populate("products", "productName price")
+      .populate("categories", "name");
     res.status(200).json(offers);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch offers" });
   }
 };
+//////////////////////////////////////////////////////////////
+export const getOfferById = async (req, res) => {
+  try {
+    const { id } = req.query;
+    const offer = await Offer.findById(id)
+      .populate("products", "productName price")
+      .populate("categories", "name");
+    console.log(offer);
 
+    res.status(200).json(offer)
+  } catch (error) {
+    res.status(500).json({message: "Server Error"})
+  }
+};
+/////////////////////////////////////////////////////////////
+export const updateOfferStatus = async (req, res) => {
+  try {
+    const { offerId, status } = req.body;
+
+    const updatedOffer = await Offer.findByIdAndUpdate(
+      offerId,
+      { listed: status },
+      { new: true }
+    );
+    if (!updatedOffer) {
+      return res.status(404).json({ message: "Offer not found" });
+    }
+    res.status(200).json(updatedOffer);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+////////////////////////////////////////////////////////////////
+export const deleteOffer = async (req, res) => {
+  try {
+    const { offerId } = req.body;
+
+    const offer = await Offer.findById(offerId);
+    if (!offer) {
+      return res.status(404).json({ message: "Offer not existing" });
+    }
+
+    if (offer.products.length > 0) {
+      await Promise.all(
+        offer.products.map(async (id) => {
+          await Product.findByIdAndUpdate(
+            id,
+            { $pull: { offers: offer._id } },
+            { new: true }
+          );
+        })
+      );
+    }
+
+    if (offer.categories.length > 0) {
+      await Promise.all(
+        offer.categories.map(async (catId) => {
+          const category = await Category.findById(catId);
+          const products = await Product.find({ category: category._id });
+
+          await Promise.all(
+            products.map(async (product) => {
+              await Product.findByIdAndUpdate(
+                product._id,
+                { $pull: { offers: offer._id } },
+                { new: true }
+              );
+            })
+          );
+        })
+      );
+    }
+
+    await Offer.findByIdAndDelete(offerId);
+
+    res.status(200).json({ message: "offer deleted successfully" });
+  } catch (error) {}
+};
+/////////////////////////////////////////////////////////////
 export const getProductsWithOffers = async (req, res) => {
   try {
     const currentDate = new Date();
-    
-    // Get products with active offers
+
     const products = await Product.aggregate([
       {
-        $match: { listed: true }
+        $match: { listed: true },
       },
       {
         $lookup: {
           from: "offers",
-          let: { 
+          let: {
             productId: "$_id",
-            categoryId: "$category"
+            categoryId: "$category",
           },
           pipeline: [
             {
@@ -162,24 +270,24 @@ export const getProductsWithOffers = async (req, res) => {
                     {
                       $or: [
                         { $in: ["$$productId", "$products"] },
-                        { $in: ["$$categoryId", "$categories"] }
-                      ]
-                    }
-                  ]
-                }
-              }
-            }
+                        { $in: ["$$categoryId", "$categories"] },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
           ],
-          as: "activeOffers"
-        }
+          as: "activeOffers",
+        },
       },
       {
         $lookup: {
           from: "categories",
           localField: "category",
           foreignField: "_id",
-          as: "categoryDetails"
-        }
+          as: "categoryDetails",
+        },
       },
       {
         $addFields: {
@@ -197,18 +305,18 @@ export const getProductsWithOffers = async (req, res) => {
                       {
                         $gt: [
                           { $ifNull: ["$$this.discountValue", 0] },
-                          { $ifNull: ["$$value.discountValue", 0] }
-                        ]
-                      }
-                    ]
+                          { $ifNull: ["$$value.discountValue", 0] },
+                        ],
+                      },
+                    ],
                   },
                   then: "$$this",
-                  else: "$$value"
-                }
-              }
-            }
-          }
-        }
+                  else: "$$value",
+                },
+              },
+            },
+          },
+        },
       },
       {
         $addFields: {
@@ -224,21 +332,21 @@ export const getProductsWithOffers = async (req, res) => {
                       {
                         $multiply: [
                           "$price",
-                          { $divide: ["$bestOffer.discountValue", 100] }
-                        ]
-                      }
-                    ]
+                          { $divide: ["$bestOffer.discountValue", 100] },
+                        ],
+                      },
+                    ],
                   },
                   else: {
-                    $subtract: ["$price", "$bestOffer.discountValue"]
-                  }
-                }
+                    $subtract: ["$price", "$bestOffer.discountValue"],
+                  },
+                },
               },
-              else: "$price"
-            }
-          }
-        }
-      }
+              else: "$price",
+            },
+          },
+        },
+      },
     ]);
 
     res.status(200).json({

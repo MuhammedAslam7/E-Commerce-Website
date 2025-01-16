@@ -2,7 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Wallet, Truck, CreditCard } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Wallet, Truck, CreditCard, Copy, Ticket } from "lucide-react";
 import { NavbarUser } from "@/components/user/layouts/NavbarUser";
 import { SecondNavbarUser } from "@/components/user/layouts/SecondNavbarUser";
 import { FooterUser } from "@/components/user/layouts/FooterUser";
@@ -13,6 +15,7 @@ import { useGetPaymentPageQuery } from "@/services/api/user/userApi";
 import {
   useAddOrderMutation,
   useRazorpayPaymentMutation,
+  useLazyVerifyStockQuery
 } from "@/services/api/user/userApi";
 import Breadcrumbs from "@/components/user/layouts/Breadcrumbs";
 import { useToaster } from "@/utils/Toaster";
@@ -21,76 +24,115 @@ export function PaymentPage() {
   const toast = useToaster();
   const location = useLocation();
   const navigate = useNavigate();
-  const {data, isLoading, refetch} = useGetPaymentPageQuery()
+  const { data, isLoading, refetch } = useGetPaymentPageQuery();
 
-  let {totalPrice} = data?.cart || {}
-  const minAmount = data?.minAmount
-  const walletBalance = data?.walletBalance || 0
+  let { totalPrice } = data?.cart || {};
+  const minAmount = data?.minAmount;
+  const walletBalance = data?.walletBalance || 0;
+  const availableCoupons = data?.coupon || [];
 
-  let { selectedAddress, } =
-    location?.state || {};
+  let { selectedAddress } = location?.state || {};
   const [modalOpen, setModalOpen] = useState(false);
+  const [couponModalOpen, setCouponModalOpen] = useState(false);
   const [addOrder] = useAddOrderMutation();
   const [paymentMethod, setPaymentMethod] = useState("cash on delivery");
   const [razorpayPayment] = useRazorpayPaymentMutation();
-  let [totalDiscount, setTotalDiscount] = useState(data?.cart?.totalDiscount)
-  let [value, setValue] = useState(null)
-  const [couponUsed, setCouponUsed] = useState(false)
+  const [verifyStock, { data: result, isLoading: isProceeding }] = useLazyVerifyStockQuery();
+  const [totalDiscount, setTotalDiscount] = useState(data?.cart?.totalDiscount || 0);
+  const [selectedCoupon, setSelectedCoupon] = useState(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponApplied, setCouponApplied] = useState(false);
 
   useEffect(() => {
     if (data?.cart && !data?.isFresh) {
-      refetch()
+      refetch();
     }
     if (data?.cart?.totalDiscount !== undefined) {
       setTotalDiscount(data.cart.totalDiscount);
     }
-    if (data?.value !== undefined) {
-      setValue(data.value);
-    }
-    console.log(data?.cart?.totalDiscount, data?.value);
-  }, [data?.cart, data?.value]);
+  }, [data?.cart]);
 
-
-  const handleSubmit = () => {
-    console.log(totalPrice, totalDiscount)
-    if (paymentMethod == "pay from wallet") {
-      const havebalance = walletBalance - (totalPrice - totalDiscount);
-      if (havebalance < 0) {
-        return toast(
-          "No-balance",
-          "Don't have enough balance in your wallet",
-          "#f97316"
-        );
-      }
-    }
-
-    setModalOpen(true);
+  const handleCopyCode = (code) => {
+    navigator.clipboard.writeText(code);
+    // toast("Success", "Coupon code copied to clipboard!", "#22c55e");
+    setCouponCode(code);
   };
 
-  const handleCoupon = async() => {
-    
-    setTotalDiscount(totalDiscount += value)
-    setValue("used")
-    setCouponUsed(true)
-  }
+  const handleApplyCoupon = () => {
+    const coupon = availableCoupons.find(c => c.couponCode === couponCode);
+    if (!coupon) {
+      toast("Error", "Invalid coupon code!", "#ef4444");
+      return;
+    }
+
+    if (totalPrice < coupon.minPurchaseAmount) {
+      toast("Error", `Minimum purchase amount should be ₹${coupon.minPurchaseAmount}`, "#ef4444");
+      return;
+    }
+
+    if (couponApplied) {
+      toast("Error", "Coupon already applied!", "#ef4444");
+      return;
+    }
+
+    setTotalDiscount(prev => prev + coupon.discountAmount);
+    setSelectedCoupon(coupon);
+    setCouponApplied(true);
+    toast("Success", "Coupon applied successfully!", "#22c55e");
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const response = await verifyStock().unwrap();
+      const outOfStock = response.find((res) => res.stock < 0);
+
+      if (outOfStock) {
+        toast(
+          "Out of Stock",
+          `${outOfStock.productName} is out of ${Math.abs(outOfStock.stock)} stock...Go to cart page and update the quantity please...`,
+          "#f97316"
+        );
+        return;
+      }
+
+      if (paymentMethod === "pay from wallet") {
+        const havebalance = walletBalance - (totalPrice - totalDiscount);
+        if (havebalance < 0) {
+          return toast(
+            "No-balance",
+            "Don't have enough balance in your wallet",
+            "#f97316"
+          );
+        }
+      }
+
+      setModalOpen(true);
+    } catch (error) {
+      console.log(error);
+      toast("Error", "Something went wrong!", "#ef4444");
+    }
+  };
+
+  const handlePaymentMethod = (value) => {
+    setPaymentMethod(value);
+  };
 
   const confirmSubmit = async () => {
     try {
-
       const result = await addOrder({
         addressId: selectedAddress._id,
         paymentMethod,
         totalPrice,
         totalDiscount,
-        couponUsed
+        couponUsed: couponApplied,
+        couponCode: selectedCoupon?.couponCode
       }).unwrap();
+
       setModalOpen(false);
-      if (
-        paymentMethod == "cash on delivery" ||
-        paymentMethod == "pay from wallet"
-      ) {
+
+      if (paymentMethod === "cash on delivery" || paymentMethod === "pay from wallet") {
         navigate("/order-success-page");
-      } else if (paymentMethod == "razorpay") {
+      } else if (paymentMethod === "razorpay") {
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: result.amount,
@@ -103,7 +145,8 @@ export function PaymentPage() {
               await razorpayPayment({
                 totalPrice,
                 totalDiscount,
-                couponUsed,
+                couponUsed: couponApplied,
+                couponCode: selectedCoupon?.couponCode,
                 addressId: selectedAddress._id,
                 paymentMethod: "razorpay",
                 razorpayPaymentId: response.razorpay_payment_id,
@@ -113,6 +156,7 @@ export function PaymentPage() {
               navigate("/order-success-page");
             } catch (error) {
               console.log(error);
+              toast("Error", "Payment failed!", "#ef4444");
             }
           },
           prefill: {
@@ -130,10 +174,8 @@ export function PaymentPage() {
       }
     } catch (error) {
       console.log(error);
+      toast("Error", "Order placement failed!", "#ef4444");
     }
-  };
-  const handlePaymentMethod = (value) => {
-    setPaymentMethod(value);
   };
 
   return (
@@ -184,7 +226,7 @@ export function PaymentPage() {
               </div>
 
               <p className="text-gray-800 font-semibold bg-indigo-100 px-4 py-1 rounded-full">
-                Wallet Balance: {walletBalance}
+                Wallet Balance: ₹{walletBalance}
               </p>
             </div>
           </RadioGroup>
@@ -196,7 +238,7 @@ export function PaymentPage() {
             Continue
           </Button>
 
-          <div className="w-full">
+          <div className="w-full mt-4">
             <img
               src="/logo/f68618eff45eea357bb1cd1beecfc51d 2.jpg"
               alt="Payment methods images"
@@ -207,69 +249,112 @@ export function PaymentPage() {
           </div>
         </Card>
 
-        {/* Payment Information */}
         <Card className="p-6">
-      <h2 className="text-xl font-semibold mb-6">Payment Information</h2>
-      <div className="space-y-4">
-        <div className="flex justify-between">
-          <span className="text-gray-600">Value of Products</span>
-          <span className="font-medium">₹{totalPrice}</span>
-        </div>
-
-        {/* Add Coupon Button with Value */}
-        {typeof value === "number" && (totalPrice - totalDiscount) > minAmount &&(
-          <div className="border rounded-lg p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-600">Available Coupon Discount</span>
-              <span className="text-green-500 font-medium">₹{value}</span>
+          <h2 className="text-xl font-semibold mb-6">Payment Information</h2>
+          <div className="space-y-4">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Value of Products</span>
+              <span className="font-medium">₹{totalPrice}</span>
             </div>
-            <Button 
-              variant="outline" 
-              className="w-full flex items-center justify-center gap-2"
-              onClick={handleCoupon}
-            >
-              <span className="text-base">Add Coupon</span>
-            </Button>
-          </div>
-        )}
+            
+            <div className="border rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-gray-600">Have a coupon?</span>
+                <Button 
+                  variant="outline"
+                  onClick={() => setCouponModalOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Ticket className="h-4 w-4" />
+                  View Coupons
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <Input 
+                  placeholder="Enter coupon code"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                  disabled={couponApplied}
+                />
+                <Button 
+                  onClick={handleApplyCoupon}
+                  disabled={couponApplied || !couponCode}
+                >
+                  Apply
+                </Button>
+              </div>
+              {selectedCoupon && (
+                <div className="mt-2 text-sm text-green-600">
+                  Coupon applied: {selectedCoupon.couponCode}
+                </div>
+              )}
+            </div>
 
-        <div className="flex justify-between">
-          <span className="text-gray-600">Discount (-)</span>
-          <span className="text-green-500 font-medium">
-            ₹{totalDiscount}.00
-          </span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-600">Estimated GST (+)</span>
-          <span>₹00.0</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-600">Shipping (+)</span>
-          <span className="text-green-500">FREE</span>
-        </div>
-        <div className="border-t pt-4 mt-4">
-          <div className="flex justify-between font-semibold">
-            <span>Order Total</span>
-            <span className="text-xl">₹{totalPrice - totalDiscount} /-</span>
-          </div>
-        </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Discount (-)</span>
+              <span className="text-green-500 font-medium">₹{totalDiscount}.00</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Estimated GST (+)</span>
+              <span>₹00.0</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Shipping (+)</span>
+              <span className="text-green-500">FREE</span>
+            </div>
+            <div className="border-t pt-4 mt-4">
+              <div className="flex justify-between font-semibold">
+                <span>Order Total</span>
+                <span className="text-xl">₹{totalPrice - totalDiscount} /-</span>
+              </div>
+            </div>
 
-        <div className="mt-6 bg-black text-white p-4 rounded-lg">
-          <div className="space-y-1">
-            <p className="font-medium">{selectedAddress?.fullName}</p>
-            <p>
-              {selectedAddress?.country}, {selectedAddress?.state}
-            </p>
-            <p>
-              {selectedAddress?.city}, {selectedAddress?.pincode}
-            </p>
-            <p>No: {selectedAddress?.phone}</p>
-            <p>{selectedAddress?.landMark}</p>
+            <div className="mt-6 bg-black text-white p-4 rounded-lg">
+              <div className="space-y-1">
+                <p className="font-medium">{selectedAddress?.fullName}</p>
+                <p>{selectedAddress?.country}, {selectedAddress?.state}</p>
+                <p>{selectedAddress?.city}, {selectedAddress?.pincode}</p>
+                <p>No: {selectedAddress?.phone}</p>
+                <p>{selectedAddress?.landMark}</p>
+              </div>
+            </div>
           </div>
-        </div>
+        </Card>
       </div>
-    </Card>
-      </div>
+
+      <Dialog open={couponModalOpen} onOpenChange={setCouponModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Available Coupons</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            {availableCoupons.map((coupon) => (
+              <div key={coupon._id} className="border rounded-lg p-4 space-y-2">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold text-lg">₹{coupon.discountAmount} OFF</p>
+                    <p className="text-sm text-gray-600">Min. Purchase: ₹{coupon.minPurchaseAmount}</p>
+                    <p className="text-sm text-gray-600">
+                      Valid till: {new Date(coupon.expirationDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopyCode(coupon.couponCode)}
+                    className="flex items-center gap-2"
+                  >
+                    <Copy className="h-4 w-4" />
+                    Copy Code
+                  </Button>
+                </div>
+                <p className="text-xs bg-gray-100 p-2 rounded">Code: {coupon.couponCode}</p>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <FooterUser />
       <ConfirmationModal
         isOpen={modalOpen}
@@ -277,11 +362,7 @@ export function PaymentPage() {
         onConfirm={confirmSubmit}
         title="Are you sure"
         message="If you confirm this order, You can manage the order on Your Orders"
-        confirmText={
-          paymentMethod == "cash on delivery"
-            ? "place Order"
-            : "Place Order & pay"
-        }
+        confirmText={paymentMethod === "cash on delivery" ? "Place Order" : "Place Order & Pay"}
         cancelText="Cancel"
       />
     </div>

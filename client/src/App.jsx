@@ -41,6 +41,8 @@ import { WalletPage } from "./pages/user/profile/WalletPage";
 import { ReturnItemsPage } from "./pages/admin/ReturnItemsPage";
 import { CouponPage } from "./pages/admin/CouponPage";
 import { CouponAddPage } from "./pages/admin/CouponAddPage";
+import { OfferEditPage } from "./pages/admin/OfferEditPage";
+import { CouponEditPage } from "./pages/admin/CouponEditPage";
 
 const App = () => {
   return (
@@ -61,9 +63,9 @@ const App = () => {
         />
 
         {/* User Protected Routes */}
-        <Route
+        {/* <Route
           element={<UserProtectedRoute allowedRoles={["user", "admin"]} />}
-        >
+        > */}
           <Route path="/home" element={<UserHomePage />} />
 
           <Route path="/product-details/:id" element={<ProductDetailsPage />} />
@@ -89,7 +91,7 @@ const App = () => {
             path="/wallet"
             element={<WalletPage />}
           />
-        </Route>
+        {/* </Route>rs */}
 
         {/* Admin Protected Routes */}
         <Route element={<AdminProtectedRoute allowedRoles={"admin"} />}>
@@ -119,10 +121,12 @@ const App = () => {
           <Route path="/admin/orders/order-manage/:orderId" element={<OrderManagePage />} />
           <Route path="/admin/offers" element={<OfferPage />} />
           <Route path="/admin/offers/add-offer" element={<OfferAddPage />} />
+          <Route path="/admin/offers/edit-offer/:id" element={<OfferEditPage />} />
           <Route path="/admin/sales-report" element={<SalesReportPage />} />
           <Route path="/admin/returns" element={<ReturnItemsPage />} />
           <Route path="/admin/coupons" element={<CouponPage />} />
           <Route path="/admin/coupons/add-coupon" element={<CouponAddPage />} />
+          <Route path="/admin/coupons/edit-coupon/:id" element={<CouponEditPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

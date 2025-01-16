@@ -13,7 +13,7 @@ const offerSchema = new mongoose.Schema(
     },
     discountType: {
       type: String,
-      enum: ["percentage", "flat"],
+      enum: ["percentage", "amount"],
       required: true,
     },
     discountValue: {
@@ -49,6 +49,6 @@ const offerSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const Offer = mongoose.models.Offer || mongoose.model("Offer", offerSchema);
+export const Offer = mongoose.model("Offer", offerSchema);
 
 

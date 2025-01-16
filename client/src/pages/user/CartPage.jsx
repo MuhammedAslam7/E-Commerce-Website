@@ -18,6 +18,7 @@ import {
   useUpdateCartQuantityMutation,
   useCartProductsQuery,
   useRemoveCartItemMutation,
+  useLazyVerifyStockQuery
 } from "@/services/api/user/userApi";
 import { useNavigate } from "react-router-dom";
 import { useToaster } from "@/utils/Toaster";
@@ -29,6 +30,7 @@ export const CartPage = () => {
   const userId = useSelector((state) => state?.user?.userId);
   const [updateCartQuantity] = useUpdateCartQuantityMutation();
   const { data: cartData, isLoading } = useCartProductsQuery(userId);
+  const [verifyStock, {data: result, isLoading: isProceeding}] = useLazyVerifyStockQuery()
   const [removeCartItem] = useRemoveCartItemMutation();
   const [products, setProducts] = useState([]);
   const { items = [], totalPrice, totalDiscount } = cartData || {};
@@ -43,7 +45,7 @@ export const CartPage = () => {
   }, [items]);
 
 
-  const updateQuantity = async (productId, variantId, newQuantity, stock) => {
+  const updateQuantity = async (productId, variantId, newQuantity, stock, status) => {
     const validQuantity = Math.max(1, newQuantity);
     if (newQuantity == 6) {
       return toast(
@@ -51,9 +53,11 @@ export const CartPage = () => {
         "You can't purchase more than the maximum quantity",
         "#f97316"
       );
-    }
-    if (newQuantity > stock) {
-      return toast("No stock", "No more stock is availabe", "#f97316");
+    } if(status == "inc") {
+
+      if (newQuantity > stock) {
+        return toast("No stock", "No more stock is availabe", "#f97316");
+      }
     }
     setProducts(
       products?.map((product) =>
@@ -80,6 +84,23 @@ export const CartPage = () => {
       console.log(error);
     }
   };
+  const handleProceed = async() => {
+    try {
+      const response = await verifyStock().unwrap()
+      const outOfStock = response.find((res) => res.stock < 0)
+      if (outOfStock) {
+        console.log(outOfStock)
+        toast("Out of Stock", `${outOfStock.productName} is out of ${Math.abs(outOfStock.stock)} stock`, "#f97316");
+        return;
+      }
+
+        navigate("/checkout-page")
+      
+    } catch (error) {
+      console.log(error)
+      
+    }
+  }
 
   if (isLoading) {
     return (
@@ -198,7 +219,8 @@ export const CartPage = () => {
                                   product?.productId,
                                   product?.variant?._id,
                                   product?.quantity - 1,
-                                  product?.variant?.stock
+                                  product?.variant?.stock,
+                                  "dec"
                                 )
                               }
                             >
@@ -216,7 +238,8 @@ export const CartPage = () => {
                                   product?.productId,
                                   product?.variant._id,
                                   product?.quantity + 1,
-                                  product?.variant?.stock
+                                  product?.variant?.stock,
+                                  "inc"
                                 )
                               }
                             >
@@ -274,11 +297,7 @@ export const CartPage = () => {
                   <Button
                     className="w-full"
                     size="lg"
-                    onClick={() =>
-                      navigate("/checkout-page", {
-                        state: { totalPrice: totalPrice, totalDiscount, },
-                      })
-                    }
+                    onClick={handleProceed}
                     disabled={!isStockAvailable}
                   >
                     Proceed to Checkout

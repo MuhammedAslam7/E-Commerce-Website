@@ -171,7 +171,46 @@ export const adminApi = createApi({
         method: "POST",
         body: { values },
       }),
+      invalidatesTags: ["Offers"]
     }),
+    getOffers:builder.query({
+      query:()=>({
+          url:'admin/offers/all-offers',
+          method:"GET"
+      }),
+      providesTags:['Offers']
+  }),
+  updateOfferStatus: builder.mutation({
+    query: ({offerId, status}) => ({
+      url: "admin/offers/update-status",
+      method: "PATCH",
+      body: {offerId, status}
+    }),
+    invalidatesTags: ["Offers"]
+  }),
+  deleteOffer: builder.mutation({
+    query: ({offerId}) => ({
+      url: "admin/offers/delete-offer",
+      method: "DELETE",
+      body: {offerId}
+    }),
+    invalidatesTags: ["Offers"]
+  }),
+  getOfferById: builder.query({
+    query: (id) => ({
+      url: `admin/offers/offer?id=${id}`,
+      method: "GET",
+    }),
+    providesTags: ["OfferEdit"]
+  }),
+  updateOffer: builder.mutation({
+    query: ({id, values}) => ({
+      url: "admin/offers/update-offer",
+      method: "PATCH",
+      body: {id, values}
+    }),
+    invalidatesTags: ["Offers", "OfferEdit"]
+  }),
     dashboard: builder.query({
       query: () => ({
         url: "admin/dasboard",
@@ -204,13 +243,46 @@ export const adminApi = createApi({
         url: "admin/coupons/add-coupon",
         method: "POST",
         body: {values}
-      })
+      }),
+      invalidatesTags: ["Coupons"]
     }),
     getCoupons: builder.query({
       query: () => ({
         url: "admin/coupons/all-coupons",
         method: "GET" 
+      }),
+      providesTags: ["Coupons"]
+    }),
+    updateCouponStatus: builder.mutation({
+      query: ({couponId, status}) => ({
+        url: "admin/coupons/update-status",
+        method: "PATCH",
+        body: {couponId, status}
+      }),
+      invalidatesTags: ["Coupons"]
+    }),
+    getCouponById: builder.query({
+      query: (id) => ({
+        url: `admin/coupons/coupon?id=${id}`,
+        method: "GET"
       })
+
+    }),
+    updateCoupon: builder.mutation({
+      query: ({id, values}) => ({
+        url: "admin/coupons/update-coupon",
+        method: "PATCH",
+        body: {id, values}
+      }),
+      invalidatesTags: ["Coupons"]
+    }),
+    deleteCoupon : builder.mutation({
+      query: ({couponId}) => ({
+        url: "admin/coupons/delete-coupon",
+        method: "DELETE",
+        body: {couponId}
+      }),
+      invalidatesTags: ["Coupons"]
     })
   }),
 });
@@ -238,10 +310,19 @@ export const {
   useUpdateOrderStatusMutation,
   useUpdateItemStatusMutation,
   useAddOfferMutation,
+  useGetOffersQuery,
+  useUpdateOfferStatusMutation,
+  useDeleteOfferMutation,
+  useGetOfferByIdQuery,
+  useUpdateOfferMutation,
   useDashboardQuery,
   useGetSalesQuery,
   useGetReturnOrdersQuery,
   useUpdateReturnStatusMutation,
   useAddCouponMutation,
-  useGetCouponsQuery
+  useGetCouponsQuery,
+  useUpdateCouponStatusMutation,
+  useGetCouponByIdQuery,
+  useUpdateCouponMutation,
+  useDeleteCouponMutation
 } = adminApi;

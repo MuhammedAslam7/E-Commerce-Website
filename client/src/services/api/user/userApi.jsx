@@ -52,11 +52,24 @@ export const userApi = createApi({
       }),
       providesTags: ["Cart"],
     }),
+    verifyStock: builder.query({
+      query: () => ({
+        url: "user/verify-stock",
+        method: "GET"
+      }),
+    }),
+    checkoutPage: builder.query({
+      query: () => ({
+        url: "user/checkout-page",
+        method: "GET",
+      })
+    }),
     getPaymentPage: builder.query({
       query: () => ({
         url: "user/payment-page",
         method: "GET",
       }),
+    invalidatesTags: ["Cart"]
     }),
     updateCartQuantity: builder.mutation({
       query: ({ productId, variantId, newQuantity }) => ({
@@ -135,6 +148,7 @@ export const userApi = createApi({
         totalPrice,
         totalDiscount,
         couponUsed,
+        couponCode
       }) => ({
         url: "user/place-order",
         method: "POST",
@@ -144,6 +158,7 @@ export const userApi = createApi({
           totalPrice,
           totalDiscount,
           couponUsed,
+          couponCode
         },
       }),
       invalidatesTags: ["ProductDetails", "Cart", "MyOrders"],
@@ -208,6 +223,7 @@ export const userApi = createApi({
         totalPrice,
         totalDiscount,
         couponUsed,
+        couponCode
       }) => ({
         url: "user/razorpay-payment",
         method: "POST",
@@ -220,6 +236,7 @@ export const userApi = createApi({
           totalPrice,
           totalDiscount,
           couponUsed,
+          couponCode
         },
       }),
     }),
@@ -277,6 +294,8 @@ export const {
   useProductsListQuery,
   useAddToCartMutation,
   useCartProductsQuery,
+  useLazyVerifyStockQuery,
+  useCheckoutPageQuery,
   useGetPaymentPageQuery,
   useUpdateCartQuantityMutation,
   useRemoveCartItemMutation,

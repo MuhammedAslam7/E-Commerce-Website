@@ -1,6 +1,7 @@
 import { Product } from "../model/product.js";
 import { Category } from "../model/category.js";
 import { Brand } from "../model/brand.js";
+import { Offer } from "../model/offerSchema.js";
 //////////////////////////////////////////////////////////
 export const addProduct = async (req, res) => {
   try {
@@ -33,7 +34,14 @@ export const addProduct = async (req, res) => {
       brand,
       thumbnailImage: images[0],
       variants: [{ color, stock, images }],
+      offers: []
     });
+
+    const offers = await Offer.find({categories: category})
+
+    if(offers.length > 0){
+      product.offers = offers.map((offer) => offer._id)
+    }
 
     await product.save();
     res.status(201).json({ message: "Product added successfully", product });
@@ -84,7 +92,7 @@ export const getAllProducts = async (req, res) => {
       .skip(skip)
       .limit(Number(limit))
       .populate("category")
-      .populate("brand");
+      .populate("brand").sort({createdAt: -1})
 
       const totalProducts = await Product.countDocuments();
       const totalPage = Math.ceil(totalProducts / limit)
@@ -126,21 +134,25 @@ export const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(id)
       .populate("category")
-      .populate("brand");
+      .populate("brand")
+      .populate("offers");
+
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
-    console.log(product);
-    res.status(200).json(product);
+
+    const categories = await Category.find({}, {name: 1})
+
+    res.status(200).json({product, categories});
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 ///////////////////////////////////////////////////////////////
 export const editProduct = async (req, res) => {
   try {
     const {id, formData} = req.body
-    // console.log(formData)
 
     const product = await Product.findById(id);
     if (!product) {
@@ -166,8 +178,22 @@ export const editProduct = async (req, res) => {
     product.category = categoryId
     product.brand = brandId
     product.variants = formData.variants
+    product.offers = []
 
     await product.save()
+    console.log(product)
+
+    const offers = await Offer.find({
+      $or: [
+        { categories: product.category },
+        { products: product._id }      
+      ]
+    });
+
+    console.log(offers)
+
+    await Product.findByIdAndUpdate(product._id, {$set: {offers: offers}})
+
     res.status(200).json({
       message: "Product updated successfully",
       updatedProduct: product,

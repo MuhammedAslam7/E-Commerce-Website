@@ -2,10 +2,7 @@ import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  useAddAddressMutation,
-  useGetAddressQuery,
-} from "@/services/api/user/userApi";
+import { useAddAddressMutation } from "@/services/api/user/userApi";
 import { useToaster } from "@/utils/Toaster";
 import { NavbarUser } from "@/components/user/layouts/NavbarUser";
 import { SecondNavbarUser } from "@/components/user/layouts/SecondNavbarUser";
@@ -23,18 +20,25 @@ import {
   Check,
 } from "lucide-react";
 import Breadcrumbs from "@/components/user/layouts/Breadcrumbs";
+import {
+  useCheckoutPageQuery,
+  useLazyVerifyStockQuery,
+} from "@/services/api/user/userApi";
 
 export function CheckoutPage() {
   const toast = useToaster();
   const location = useLocation();
   const navigate = useNavigate();
   const [addAddress, { isLoading: isAdding }] = useAddAddressMutation();
-  const { data: response = {}, isLoading } = useGetAddressQuery();
+  const { refetch, data: response = {}, isLoading } = useCheckoutPageQuery();
+  const [verifyStock, { data: result, isLoading: isProceeding }] =
+    useLazyVerifyStockQuery();
   const [selectedAddress, setSelectedAddress] = useState(
     response?.addresses?.[0]
   );
-  const totalPrice = location?.state?.totalPrice;
-  const totalDiscount = location?.state?.totalDiscount;
+
+  const { cart } = response || {};
+
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
 
@@ -79,6 +83,7 @@ export function CheckoutPage() {
       try {
         await addAddress({ newAddress: values }).unwrap();
         resetForm();
+        refetch();
         setShowNewAddressForm(false);
         toast("Success", "Address Added Successfully", "#22c55e");
       } catch (error) {
@@ -94,14 +99,25 @@ export function CheckoutPage() {
   };
 
   const handleProceed = async () => {
-    if (!selectedAddress) {
-      return toast(
-        "No Address",
-        "Add a address to deliver the product",
-        "#f97316"
-      );
+    try {
+      const response = await verifyStock().unwrap();
+      const outOfStock = response.find((res) => res.stock < 0);
+      if (outOfStock) {
+        console.log(outOfStock);
+        toast(
+          "Out of Stock",
+          `${outOfStock.productName} is out of ${Math.abs(
+            outOfStock.stock
+          )} stock...Go to page and update the quantity please...`,
+          "#f97316"
+        );
+        return;
+      }
+
+      navigate("/payment-page", {state: {selectedAddress}});
+    } catch (error) {
+      console.log(error);
     }
-    navigate("/payment-page", { state: { selectedAddress, totalPrice, totalDiscount} });
   };
 
   if (isLoading) {
@@ -411,7 +427,7 @@ export function CheckoutPage() {
                 <div className="flex justify-between items-center pb-4 border-b border-gray-200">
                   <span className="text-gray-600">Subtotal</span>
                   <span className="font-semibold text-gray-900">
-                    ₹{totalPrice}
+                    ₹{cart?.totalPrice}
                   </span>
                 </div>
                 <div className="flex justify-between items-center pb-4 border-b border-gray-200">
@@ -424,7 +440,7 @@ export function CheckoutPage() {
                 <div className="flex justify-between items-center pb-4 border-b border-gray-200">
                   <span className="text-gray-600">Total Discount</span>
                   <span className="font-semibold text-green-500">
-                    ₹-{totalDiscount}
+                    ₹-{cart?.totalDiscount}
                   </span>
                 </div>
                 <div className="flex justify-between items-center pt-4">
@@ -432,7 +448,7 @@ export function CheckoutPage() {
                     Total
                   </span>
                   <span className="text-xl font-bold text-gray-900">
-                    ₹{totalPrice - totalDiscount} /-
+                    ₹{cart?.totalPrice - cart?.totalDiscount} /-
                   </span>
                 </div>
                 <Button

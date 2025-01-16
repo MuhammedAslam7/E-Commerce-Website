@@ -1,59 +1,96 @@
-import { useNavigate } from "react-router-dom";
+import { useGetCouponByIdQuery, useUpdateCouponMutation } from "@/services/api/admin/adminApi";
+import { useNavigate, useParams } from "react-router-dom";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { useAddCouponMutation } from "@/services/api/admin/adminApi";
 import { SidebarAdmin } from "@/components/admin/layouts/SidebarAdmin";
 import { NavbarAdmin } from "@/components/admin/layouts/NavbarAdmin";
 import { useEffect, useState } from "react";
 
 const OfferSchema = Yup.object().shape({
   couponCode: Yup.string()
-    .matches(
-      /^[A-Z0-9]+$/,
-      "Coupon code must contain only uppercase letters and numbers"
-    )
+    .matches(/^[A-Z0-9]+$/, "Coupon code must contain only uppercase letters and numbers")
     .min(3, "Coupon code must be at least 3 characters")
     .max(20, "Coupon code must be less than 20 characters")
     .required("Coupon code is required"),
-
   discountAmount: Yup.number()
     .positive("Discount amount must be positive")
     .required("Discount amount is required"),
-
   minPurchaseAmount: Yup.number()
     .positive("Minimum purchase amount must be positive")
     .required("Minimum purchase amount is required"),
-  endDate: Yup.date()
-    .required("End date is required")
-    .min(new Date(), "End date must be in the future"),
+  expirationDate: Yup.date()
+    .min(new Date(), "Expiration date must be in the future")
+    .required("Expiration date is required"),
 });
 
-export const CouponAddPage = () => {
+export const CouponEditPage = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [addCoupon] = useAddCouponMutation();
+  const { data, isLoading } = useGetCouponByIdQuery(id);
+  const [updateCoupon] = useUpdateCouponMutation();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
 
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+    
+    const date = new Date(dateString);
+    
+    const timezoneOffset = date.getTimezoneOffset();
+    
+    const adjustedDate = new Date(date.getTime() - (timezoneOffset * 60000));
+    
+    return adjustedDate.toISOString().slice(0, 16);
+  };
+
+  const formatDateForSubmission = (dateString) => {
+    if (!dateString) return "";
+    
+    const date = new Date(dateString);
+    
+    return date.toISOString();
+  };
+
   const initialValues = {
-    couponCode: "",
-    discountAmount: "",
-    minPurchaseAmount: "",
-    endDate: "",
+    couponCode: data?.coupon?.couponCode || "",
+    discountAmount: data?.coupon?.discountAmount || "",
+    minPurchaseAmount: data?.coupon?.minPurchaseAmount || "",
+    expirationDate: formatDateForInput(data?.coupon?.expirationDate) || "",
   };
 
   const handleSubmit = async (values, { setSubmitting, setErrors }) => {
     try {
-      await addCoupon(values).unwrap();
+      const submissionValues = {
+        ...values,
+        expirationDate: formatDateForSubmission(values.expirationDate),
+      };
+
+      const updateData = {
+        id,
+        values: submissionValues,
+      };
+      
+      await updateCoupon(updateData).unwrap();
       navigate("/admin/coupons");
     } catch (error) {
       if (error.data?.errors) {
         setErrors(error.data.errors);
+      } else {
+        console.error("Update failed:", error);
       }
     } finally {
       setSubmitting(false);
@@ -67,18 +104,19 @@ export const CouponAddPage = () => {
         <NavbarAdmin
           isDarkMode={isDarkMode}
           setIsDarkMode={setIsDarkMode}
-          pageName="ADD OFFER"
+          pageName="EDIT COUPON"
         />
         <div className="container mx-auto p-6">
           <Card className="max-w-4xl mx-auto">
             <CardHeader>
-              <CardTitle>Add New Coupon</CardTitle>
+              <CardTitle>Edit Coupon</CardTitle>
             </CardHeader>
             <CardContent>
               <Formik
                 initialValues={initialValues}
                 validationSchema={OfferSchema}
                 onSubmit={handleSubmit}
+                enableReinitialize
               >
                 {({ errors, touched, isSubmitting }) => (
                   <Form className="space-y-6">
@@ -88,15 +126,11 @@ export const CouponAddPage = () => {
                         name="couponCode"
                         id="couponCode"
                         className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
-                          errors.couponCode && touched.couponCode
-                            ? "border-red-500"
-                            : ""
+                          errors.couponCode && touched.couponCode ? "border-red-500" : ""
                         }`}
                       />
                       {errors.couponCode && touched.couponCode && (
-                        <div className="text-red-500 text-sm">
-                          {errors.couponCode}
-                        </div>
+                        <div className="text-red-500 text-sm">{errors.couponCode}</div>
                       )}
                     </div>
 
@@ -114,67 +148,57 @@ export const CouponAddPage = () => {
                           }`}
                         />
                         {errors.discountAmount && touched.discountAmount && (
-                          <div className="text-red-500 text-sm">
-                            {errors.discountAmount}
-                          </div>
+                          <div className="text-red-500 text-sm">{errors.discountAmount}</div>
                         )}
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="minPurchaseAmount">
-                          Minimum Purchase Amount
-                        </Label>
+                        <Label htmlFor="minPurchaseAmount">Minimum Purchase Amount</Label>
                         <Field
                           type="number"
                           name="minPurchaseAmount"
                           id="minPurchaseAmount"
                           className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
-                            errors.minPurchaseAmount &&
-                            touched.minPurchaseAmount
+                            errors.minPurchaseAmount && touched.minPurchaseAmount
                               ? "border-red-500"
                               : ""
                           }`}
                         />
-                        {errors.minPurchaseAmount &&
-                          touched.minPurchaseAmount && (
-                            <div className="text-red-500 text-sm">
-                              {errors.minPurchaseAmount}
-                            </div>
-                          )}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="endDate">End Date</Label>
-                        <Field
-                          name="endDate"
-                          id="endDate"
-                          type="datetime-local"
-                          className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
-                            errors.endDate && touched.endDate
-                              ? "border-red-500"
-                              : ""
-                          }`}
-                        />
-                        {errors.endDate && touched.endDate && (
+                        {errors.minPurchaseAmount && touched.minPurchaseAmount && (
                           <div className="text-red-500 text-sm">
-                            {errors.endDate}
+                            {errors.minPurchaseAmount}
                           </div>
                         )}
                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="expirationDate">Expiration Date</Label>
+                      <Field
+                        name="expirationDate"
+                        id="expirationDate"
+                        type="datetime-local"
+                        className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                          errors.expirationDate && touched.expirationDate
+                            ? "border-red-500"
+                            : ""
+                        }`}
+                      />
+                      {errors.expirationDate && touched.expirationDate && (
+                        <div className="text-red-500 text-sm">{errors.expirationDate}</div>
+                      )}
                     </div>
 
                     <div className="flex justify-end gap-4">
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => navigate("/admin/offers")}
+                        onClick={() => navigate("/admin/coupons")}
                       >
                         Cancel
                       </Button>
                       <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? "Adding..." : "Add Coupon"}
+                        {isSubmitting ? "Saving..." : "Save Changes"}
                       </Button>
                     </div>
                   </Form>

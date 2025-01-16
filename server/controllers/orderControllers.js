@@ -321,7 +321,7 @@ export const placeOrder = async (req, res) => {
     return res.status(404).json({ message: "User is not valid" });
   }
 
-  const { addressId, paymentMethod, totalPrice, totalDiscount, couponUsed } = req.body;
+  const { addressId, paymentMethod, totalPrice, totalDiscount, couponUsed, couponCode } = req.body;
 
   try {
     if (paymentMethod == "cash on delivery" || paymentMethod == "pay from wallet") {
@@ -388,9 +388,11 @@ export const placeOrder = async (req, res) => {
 
         await wallet.save()
       }
+
+      console.log(couponUsed, couponCode)
+
       if(couponUsed) {
-        console.log("Coupon used")
-        const coupon = await Coupon.findOne().sort({createdAt: -1})
+        const coupon = await Coupon.findOne({couponCode})
   
         if(coupon) {
           coupon.usedUsersId.push(userId)
@@ -399,8 +401,6 @@ export const placeOrder = async (req, res) => {
       }
 
       }
-
-
       // cart.items = [];
       // cart.totalPrice = 0;
       // cart.totalDiscount = 0;

@@ -34,7 +34,7 @@ const OfferSchema = Yup.object().shape({
   discountValue: Yup.number()
     .when("discountType", {
       is: "percentage",
-      then: (schema) => schema.min(1).max(100).required(),
+      then: (schema) => schema.min(1).max(80).required(),
       otherwise: (schema) => schema.min(1).required(),
     })
     .required("Discount value is required"),
@@ -92,7 +92,8 @@ export const OfferAddPage = () => {
   const handleSubmit = async (values, { setSubmitting, setErrors }) => {
     try {
       console.log(values);
-      await addOffer({values}).unwrap();
+      await addOffer({values}).unwrap()
+      navigate("/admin/offers")
     } catch (error) {
       if (error.data?.errors) {
         setErrors(error.data.errors);
@@ -176,7 +177,11 @@ export const OfferAddPage = () => {
                               <Label htmlFor="percentage">Percentage</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="amount" id="amount" />
+                              <RadioGroupItem
+                                disabled={values.applicationType == "category"}
+                                value="amount"
+                                id="amount"
+                              />
                               <Label htmlFor="amount">Fixed Amount</Label>
                             </div>
                           </RadioGroup>
@@ -195,6 +200,10 @@ export const OfferAddPage = () => {
                               : "(₹)"}
                           </Label>
                           <Field
+                            disabled={
+                              values.applicationType == "category" &&
+                              values.discountType == "amount"
+                            }
                             name="discountValue"
                             type="number"
                             className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
@@ -303,71 +312,71 @@ export const OfferAddPage = () => {
                             )}
                           </div>
                         )}
-                    
-                    {values.applicationType === "product" && (
-                      <div className="space-y-2">
-                        <Label htmlFor="productId">Select Products</Label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={open}
-                              className="w-full justify-between"
-                            >
-                              {values.productId.length > 0
-                                ? `${values.productId.length} products selected`
-                                : "Select products"}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-full p-0">
-                            <ScrollArea className="h-[200px]">
-                              {products.map((product) => (
-                                <div
-                                  key={product._id}
-                                  className="flex items-center space-x-2 p-2"
+
+                        {values.applicationType === "product" && (
+                          <div className="space-y-2">
+                            <Label htmlFor="productId">Select Products</Label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  aria-expanded={open}
+                                  className="w-full justify-between"
                                 >
-                                  <Checkbox
-                                    id={`product-${product._id}`}
-                                    checked={values.productId.includes(
-                                      product._id
-                                    )}
-                                    onCheckedChange={(checked) => {
-                                      if (checked) {
-                                        setFieldValue("productId", [
-                                          ...values.productId,
-                                          product._id,
-                                        ]);
-                                      } else {
-                                        setFieldValue(
-                                          "productId",
-                                          values.productId.filter(
-                                            (id) => id !== product._id
-                                          )
-                                        );
-                                      }
-                                    }}
-                                  />
-                                  <label
-                                    htmlFor={`product-${product._id}`}
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                  >
-                                    {product.productName}
-                                  </label>
-                                </div>
-                              ))}
-                            </ScrollArea>
-                          </PopoverContent>
-                        </Popover>
-                        {errors.productId && touched.productId && (
-                          <div className="text-red-500 text-sm">
-                            {errors.productId}
+                                  {values.productId.length > 0
+                                    ? `${values.productId.length} products selected`
+                                    : "Select products"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-full p-0">
+                                <ScrollArea className="h-[200px]">
+                                  {products.map((product) => (
+                                    <div
+                                      key={product._id}
+                                      className="flex items-center space-x-2 p-2"
+                                    >
+                                      <Checkbox
+                                        id={`product-${product._id}`}
+                                        checked={values.productId.includes(
+                                          product._id
+                                        )}
+                                        onCheckedChange={(checked) => {
+                                          if (checked) {
+                                            setFieldValue("productId", [
+                                              ...values.productId,
+                                              product._id,
+                                            ]);
+                                          } else {
+                                            setFieldValue(
+                                              "productId",
+                                              values.productId.filter(
+                                                (id) => id !== product._id
+                                              )
+                                            );
+                                          }
+                                        }}
+                                      />
+                                      <label
+                                        htmlFor={`product-${product._id}`}
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                      >
+                                        {product.productName} , {product.price}
+                                      </label>
+                                    </div>
+                                  ))}
+                                </ScrollArea>
+                              </PopoverContent>
+                            </Popover>
+                            {errors.productId && touched.productId && (
+                              <div className="text-red-500 text-sm">
+                                {errors.productId}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
-                    )}
-                      </div>
-                      </div>
+                    </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
