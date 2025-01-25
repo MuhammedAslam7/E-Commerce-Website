@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { trusted } from "mongoose";
 
 const orderSchema = mongoose.Schema(
   {
@@ -33,7 +33,14 @@ const orderSchema = mongoose.Schema(
     orderStatus: {
       type: String,
       required: true,
-      enum: ["Pending", "Shipped", "Delivered", "Cancelled"],
+      enum: [
+        "Pending",
+        "Shipped",
+        "Delivered",
+        "Cancelled",
+        "Return Requested",
+        "Returned",
+      ],
       default: "Pending",
     },
     paymentStatus: {
@@ -57,6 +64,14 @@ const orderSchema = mongoose.Schema(
           type: Number,
           required: true,
         },
+        productPrice: {
+          type: Number,
+          required: true,
+        },
+        productDiscountPrice: {
+          type: Number,
+          default: null,
+        },
         itemStatus: {
           type: String,
           required: true,
@@ -68,6 +83,12 @@ const orderSchema = mongoose.Schema(
             "Return Requested",
             "Returned",
           ],
+          default: "Pending",
+        },
+        itemPaymentStatus: {
+          type: String,
+          required: true,
+          enum: ["Pending", "Paid", "Failed"],
           default: "Pending",
         },
         itemReturnReason: {

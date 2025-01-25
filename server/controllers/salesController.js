@@ -96,12 +96,14 @@ export const salesData = async (req, res) => {
         {
           $group: {
             _id: null,
-            totalPayableAmount: { $sum: "$payableAmount" }
+            totalPayableAmount: { $sum: "$payableAmount" },
+            totalDiscount: {$sum: "$totalDiscount"}
           }
         }
       ]);
   
       const totalRevenue = revenueResult[0]?.totalPayableAmount || 0;
+      const totalDiscount = revenueResult[1]?.totalDiscount || 0
       
 
       const ordersCount = await Order.countDocuments(matchCondition);
@@ -114,7 +116,8 @@ export const salesData = async (req, res) => {
         ordersCount,
         customers,
         totalPage,
-        currentPage
+        currentPage,
+        totalDiscount
       });
     } catch (error) {
       console.error('Error in salesData:', error);

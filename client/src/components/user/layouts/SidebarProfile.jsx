@@ -8,8 +8,8 @@ const menuItems = [
   { icon: MapPin, label: "Delivery Address", href: "/address" },
   { icon: Lock, label: "Change Password", href: "/change-password" },
   { icon: Wallet, label: "Wallet", href: "/wallet" },
-  { icon: Tag, label: "Coupons", href: "/coupons" },
-  { icon: Users, label: "Referral", href: "/referral" },
+  // { icon: Tag, label: "Coupons", href: "/coupons" },
+  // { icon: Users, label: "Referral", href: "/referral" },
 ];
 
 export function SidebarProfile({heading}) {

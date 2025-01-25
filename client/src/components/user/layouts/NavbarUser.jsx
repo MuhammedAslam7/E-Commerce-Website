@@ -1,78 +1,94 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, ChevronDown, User, LogOut } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect, useRef } from "react"
+import { Search, ChevronDown, User, LogOut } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { Link, useNavigate } from "react-router-dom";
-import { FaUser, FaShoppingCart, FaHeart } from "react-icons/fa";
-import { useUserlogoutMutation } from "@/services/api/user/authApi";
-import { useDispatch } from "react-redux";
-import { userLogout } from "@/redux/slices/userSlice";
-import { useAllProductsForSearchQuery } from "@/services/api/user/userApi";
+} from "@/components/ui/dropdown-menu"
+import { Link, useNavigate, useLocation } from "react-router-dom"
+import { FaUser, FaShoppingCart, FaHeart } from "react-icons/fa"
+import { useUserlogoutMutation } from "@/services/api/user/authApi"
+import { useDispatch } from "react-redux"
+import { userLogout } from "@/redux/slices/userSlice"
+import { useAllProductsForSearchQuery } from "@/services/api/user/userApi"
 
 export const NavbarUser = ({ itemsInCart }) => {
-  const { data, isLoading } = useAllProductsForSearchQuery();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const searchRef = useRef(null);
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const [userlogout] = useUserlogoutMutation();
+  const { data, isLoading } = useAllProductsForSearchQuery()
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filteredProducts, setFilteredProducts] = useState([])
+  const [showDropdown, setShowDropdown] = useState(false)
+  const searchRef = useRef(null)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const dispatch = useDispatch()
+  const [userlogout] = useUserlogoutMutation()
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const searchQuery = searchParams.get("search")
+    if (searchQuery) {
+      setSearchTerm(searchQuery)
+    }
+  }, [location])
 
   useEffect(() => {
     if (data && searchTerm) {
-      const filtered = data.allProducts.filter(product =>
-        product.productName.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredProducts(filtered);
-      setShowDropdown(true);
+      const filtered = data?.allProducts?.filter(
+        (product) =>
+          product?.productName?.toLowerCase()?.includes(searchTerm?.toLowerCase()) ||
+          product?.category?.name?.toLowerCase()?.includes(searchTerm?.toLowerCase()) ||
+          product?.brand?.name?.toLowerCase()?.includes(searchTerm?.toLowerCase()),
+      )
+      setFilteredProducts(filtered)
+      setShowDropdown(true)
     } else {
-      setFilteredProducts([]);
-      setShowDropdown(false);
+      setFilteredProducts([])
+      setShowDropdown(false)
     }
-  }, [searchTerm, data]);
+  }, [searchTerm, data])
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setShowDropdown(false);
+      if (searchRef?.current && !searchRef?.current?.contains(event?.target)) {
+        setShowDropdown(false)
       }
-    };
+    }
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside)
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
 
   const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-  };
+    setSearchTerm(e.target.value)
+  }
 
-  // const handleProductSelect = (productId) => {
-  //   navigate(`/product/${productId}`);
-  //   setShowDropdown(false);
-  //   setSearchTerm('');
-  // };
+  const handleSearch = (e) => {
+    e.preventDefault()
+    if (searchTerm) {
+      console.log(encodeURIComponent(searchTerm))
+      navigate(`/product-list?search=${encodeURIComponent(searchTerm)}`)
+      setShowDropdown(false)
+    }
+  }
 
   const handleLogout = async () => {
     try {
-      await userlogout().unwrap();
-      console.log("logout user");
-      dispatch(userLogout());
-      window.location.href = "sign-in";
+      await userlogout().unwrap()
+      console.log("logout user")
+      dispatch(userLogout())
+      window.location.href = "sign-in"
     } catch (error) {
-      console.log(error);
+      console.log(error)
     }
-  };
-  if(isLoading) {
-    return <div>Loading.</div>
+  }
+
+  if (isLoading) {
+    return <div>Loading...</div>
   }
 
   return (
@@ -82,7 +98,7 @@ export const NavbarUser = ({ itemsInCart }) => {
           <Link to="/" className="flex items-center gap-2">
             <div>
               <img
-                src="logo/a-logo-for-an-e-commerce-website-selling_e0mnzUsxQQenSmAK3BEthw_xnvkJPvaTGi_ioiYxnBVkw.jpeg"
+                src="/logo/a-logo-for-an-e-commerce-website-selling_e0mnzUsxQQenSmAK3BEthw_xnvkJPvaTGi_ioiYxnBVkw.jpeg"
                 alt="Dune Logo"
                 className="h-14 w-14 object-fill rounded-sm"
               />
@@ -92,7 +108,7 @@ export const NavbarUser = ({ itemsInCart }) => {
 
           <div className="flex-1 gap-3 max-w-2xl mx-auto flex mt-3 mb-3" ref={searchRef}>
             <div className="flex-1 flex flex-col relative">
-              <div className="flex border border-gray-300 rounded-md overflow-hidden">
+              <form onSubmit={handleSearch} className="flex border border-gray-300 rounded-md overflow-hidden">
                 <input
                   type="search"
                   placeholder="Search for your item"
@@ -100,14 +116,10 @@ export const NavbarUser = ({ itemsInCart }) => {
                   value={searchTerm}
                   onChange={handleSearchChange}
                 />
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  className="rounded-l-none hover:bg-gray-100"
-                >
+                <Button type="submit" variant="ghost" className="rounded-l-none hover:bg-gray-100">
                   <Search className="h-5 w-5" />
                 </Button>
-              </div>
+              </form>
               {showDropdown && filteredProducts.length > 0 && (
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-b-md shadow-lg z-10 max-h-60 overflow-y-auto">
                   {filteredProducts.map((product) => (
@@ -116,9 +128,9 @@ export const NavbarUser = ({ itemsInCart }) => {
                       className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
                       onClick={() => navigate(`/product-details/${product._id}`)}
                     >
-                      <img 
-                        src={product.thumbnailImage} 
-                        alt={product.productName} 
+                      <img
+                        src={product.thumbnailImage || "/placeholder.svg"}
+                        alt={product.productName}
                         className="w-10 h-10 object-contain mr-2"
                       />
                       <div>
@@ -175,6 +187,6 @@ export const NavbarUser = ({ itemsInCart }) => {
         </div>
       </div>
     </header>
-  );
-};
+  )
+}
 

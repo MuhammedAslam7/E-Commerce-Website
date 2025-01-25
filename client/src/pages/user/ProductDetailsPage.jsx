@@ -21,7 +21,7 @@ import { SecondNavbarUser } from "@/components/user/layouts/SecondNavbarUser";
 import { useProductDetailsQuery } from "@/services/api/user/userApi";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { useAddToCartMutation } from "@/services/api/user/userApi";
+import { useAddToCartMutation, useAddToWishlistMutation } from "@/services/api/user/userApi";
 import { useToaster } from "@/utils/Toaster";
 export function ProductDetailsPage() {
   const toast = useToaster();
@@ -29,20 +29,25 @@ export function ProductDetailsPage() {
   const [currentImage, setCurrentImage] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const { id } = useParams();
-  const { data: product, isLoading, error } = useProductDetailsQuery(id);
+  const { data, isLoading, error } = useProductDetailsQuery(id);
   const [images, setImages] = useState([]);
   const [color, setColor] = useState();
   const [stock, setStock] = useState();
+  const [variantId, setVariantId] = useState()
   const [currentVariant, setCurrentVariant] = useState();
   const [isZoomed, setIsZoomed] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [addToCart] = useAddToCartMutation();
+  const [addToWishlist]  = useAddToWishlistMutation()
   const userId = useSelector((state) => state?.user?.userId);
+  const {product} = data || {}
   useEffect(() => {
+    console.log("Product variants in useEffect:", product?.variants);
     if (product?.variants?.length > 0) {
-      setImages(product.variants[0].images);
-      setColor(product.variants[0].color);
-      setStock(product.variants[0].stock);
+      setImages(product?.variants[0]?.images);
+      setColor(product?.variants[0]?.color);
+      setStock(product?.variants[0]?.stock);
+      setVariantId(product?.variants[0]?._id)
       setCurrentVariant(0);
     }
   }, [product?.variants]);
@@ -68,8 +73,20 @@ export function ProductDetailsPage() {
     setCurrentImage((prev) => (prev - 1 + images?.length) % images?.length);
   };
 
-  const toggleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
+  const toggleWishlist = async() => {
+    try {
+
+      const response = await addToWishlist({productId: product._id, variantId}).unwrap()
+      toast("Success", response?.message, "#22c55e");
+    } catch (error) {
+      if (error.status == 400) {
+        toast("Item already  in cart", error?.data?.message, "#f97316");
+      } else {
+        console.log(error);
+        toast("Error", "An Error Occured Please try again later..", "#ff0000");
+      }
+      
+    }
   };
 
   const handleMouseMove = (event) => {
@@ -87,7 +104,6 @@ export function ProductDetailsPage() {
       }).unwrap();
       toast("Success", response?.message, "#22c55e");
     } catch (error) {
-      console.log();
       if (error.status == 409) {
         toast("Item already  in cart", error?.data?.message, "#f97316");
       } else {
@@ -101,6 +117,7 @@ export function ProductDetailsPage() {
     setImages(variant?.images);
     setColor(variant?.color);
     setStock(variant?.stock);
+    setVariantId(variant?._id)
     setCurrentVariant(index);
   };
 
@@ -117,7 +134,6 @@ export function ProductDetailsPage() {
       <SecondNavbarUser />
 
       <div className="grid md:grid-cols-2 max-w-7xl gap-12 mt-7 mx-auto">
-        {/* Product Image Carousel */}
         <div className="flex gap-4">
           <div className="gap-5 flex flex-col">
             {images?.map((image, index) => (
@@ -195,7 +211,6 @@ export function ProductDetailsPage() {
           </Card>
         </div>
 
-        {/* Product Details */}
         <div className="space-y-5">
           <div className="space-y-1">
             <h2 className="text-2xl font-bold text-gray-900">

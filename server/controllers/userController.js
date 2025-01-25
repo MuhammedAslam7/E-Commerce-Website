@@ -52,6 +52,7 @@ export const userHome = async (req, res) => {
           category: 1,
           images: 1,
           createdAt: 1,
+          variants: 1,
           offers: 1,
         },
       },
@@ -103,41 +104,52 @@ export const userHome = async (req, res) => {
 };
 
 export const productPage = async (req, res) => {
-  const {
-    page = 1,
-    limit = 6,
-    minPrice,
-    maxPrice,
-    categories,
-    brands,
-  } = req.query;
-  const skip = (page - 1) * limit;
+  const { page = 1, limit = 6, minPrice, maxPrice, categories, brands, sort, search } = req.query
+  const skip = (page - 1) * limit
 
   try {
-    let query = { listed: true };
+    const query = { listed: true }
 
     if (minPrice && maxPrice) {
-      query.price = { $gte: Number(minPrice), $lte: Number(maxPrice) };
+      query.price = { $gte: Number(minPrice), $lte: Number(maxPrice) }
     }
 
     if (categories) {
       const categoryIds = await Category.find({
         name: { $in: categories.split(",") },
         listed: true,
-      }).distinct("_id");
-      query.category = { $in: categoryIds };
+      }).distinct("_id")
+      query.category = { $in: categoryIds }
     }
 
     if (brands) {
       const brandIds = await Brand.find({
         name: { $in: brands.split(",") },
         listed: true,
-      }).distinct("_id");
-      query.brand = { $in: brandIds };
+      }).distinct("_id")
+      query.brand = { $in: brandIds }
+    }
+
+    if (search) {
+      const categoryIds = await Category.find({ name: { $regex: search, $options: "i" } }).distinct("_id")
+      const brandIds = await Brand.find({ name: { $regex: search, $options: "i" } }).distinct("_id")
+      query.$or = [
+        { productName: { $regex: search, $options: "i" } },
+        { category: { $in: categoryIds } },
+        { brand: { $in: brandIds } },
+      ]
+    }
+
+    let sortOption = {}
+    if (sort) {
+      const [field, order] = sort.split("_")
+      sortOption[field] = order === "asc" ? 1 : -1
+    } else {
+      sortOption = { createdAt: -1 }
     }
 
     const products = await Product.find(query)
-      .sort({ createdAt: -1 })
+      .sort(sortOption)
       .skip(skip)
       .limit(Number(limit))
       .populate({
@@ -150,17 +162,17 @@ export const productPage = async (req, res) => {
         match: { listed: true },
         select: "name",
       })
-      .populate("offers");
+      .populate("offers")
 
     await Promise.all(
       products.map(async (product) => {
-        const current = new Date();
+        const current = new Date()
 
         const validOffers = (product.offers || []).filter((offer) => {
-          const startDate = new Date(offer.startDate);
-          const endDate = new Date(offer.endDate);
-          return current >= startDate && current <= endDate && offer.listed;
-        });
+          const startDate = new Date(offer.startDate)
+          const endDate = new Date(offer.endDate)
+          return current >= startDate && current <= endDate && offer.listed
+        })
 
         const bestOffer =
           validOffers.length > 0
@@ -168,34 +180,48 @@ export const productPage = async (req, res) => {
                 ...validOffers.map((offer) =>
                   offer.discountType === "percentage"
                     ? (product.price * offer.discountValue) / 100
-                    : offer.discountValue
-                )
+                    : offer.discountValue,
+                ),
               )
-            : 0;
+            : 0
 
-        const discountedPrice = bestOffer
-          ? Math.ceil(product.price - bestOffer)
-          : null;
+        const discountedPrice = bestOffer ? Math.ceil(product.price - bestOffer) : null
 
-        await Product.findByIdAndUpdate(product._id, { discountedPrice });
-        product.discountedPrice = discountedPrice;
-      })
-    );
+        await Product.findByIdAndUpdate(product._id, { discountedPrice })
+        product.discountedPrice = discountedPrice
+      }),
+    )
 
-    const totalProducts = await Product.countDocuments(query);
-    const totalPage = Math.ceil(totalProducts / limit);
+    const totalProducts = await Product.countDocuments(query)
+    const totalPage = Math.ceil(totalProducts / limit)
 
     res.status(200).json({
       products,
       totalPage,
       totalProducts,
       currentPage: Number(page),
-    });
+    })
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message });
+    console.error(error)
+    res.status(500).json({ message: error.message })
   }
-};
+}
+
+export const allProductsForSearch = async (req, res) => {
+  try {
+    const products = await Product.find({ listed: true })
+      .select("productName thumbnailImage price category brand")
+      .populate("category", "name")
+      .populate("brand", "name")
+
+    res.status(200).json({ allProducts: products })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: error.message })
+  }
+}
+
+
 
 //////////////////////////////////////////
 export const addToCart = async (req, res) => {
@@ -260,7 +286,7 @@ export const addToCart = async (req, res) => {
 };
 /////////////////////////////////////////
 export const cartItems = async (req, res) => {
-  const { userId } = req.query;
+  const { userId } = req.user;
 
   try {
     const cart = await Cart.findOne({ userId })

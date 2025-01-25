@@ -2,7 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Wallet, Truck, CreditCard, Copy, Ticket } from "lucide-react";
 import { NavbarUser } from "@/components/user/layouts/NavbarUser";
@@ -15,7 +20,7 @@ import { useGetPaymentPageQuery } from "@/services/api/user/userApi";
 import {
   useAddOrderMutation,
   useRazorpayPaymentMutation,
-  useLazyVerifyStockQuery
+  useLazyVerifyStockQuery,
 } from "@/services/api/user/userApi";
 import Breadcrumbs from "@/components/user/layouts/Breadcrumbs";
 import { useToaster } from "@/utils/Toaster";
@@ -35,10 +40,13 @@ export function PaymentPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [couponModalOpen, setCouponModalOpen] = useState(false);
   const [addOrder] = useAddOrderMutation();
-  const [paymentMethod, setPaymentMethod] = useState("cash on delivery");
+  const [paymentMethod, setPaymentMethod] = useState(totalPrice < 1000 ? "cash on delivery" : "razorpay");
   const [razorpayPayment] = useRazorpayPaymentMutation();
-  const [verifyStock, { data: result, isLoading: isProceeding }] = useLazyVerifyStockQuery();
-  const [totalDiscount, setTotalDiscount] = useState(data?.cart?.totalDiscount || 0);
+  const [verifyStock, { data: result, isLoading: isProceeding }] =
+    useLazyVerifyStockQuery();
+  const [totalDiscount, setTotalDiscount] = useState(
+    data?.cart?.totalDiscount || 0
+  );
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
@@ -54,20 +62,33 @@ export function PaymentPage() {
 
   const handleCopyCode = (code) => {
     navigator.clipboard.writeText(code);
-    // toast("Success", "Coupon code copied to clipboard!", "#22c55e");
     setCouponCode(code);
   };
 
   const handleApplyCoupon = () => {
-    const coupon = availableCoupons.find(c => c.couponCode === couponCode);
+    const coupon = availableCoupons.find((c) => c.couponCode === couponCode);
     if (!coupon) {
       toast("Error", "Invalid coupon code!", "#ef4444");
       return;
     }
 
     if (totalPrice < coupon.minPurchaseAmount) {
-      toast("Error", `Minimum purchase amount should be ₹${coupon.minPurchaseAmount}`, "#ef4444");
+      toast(
+        "Error",
+        `Minimum purchase amount should be ₹${coupon.minPurchaseAmount}`,
+        "#ef4444"
+      );
       return;
+    }
+
+    const couponLimit = totalPrice * 0.5;
+
+    if (coupon.discountAmount > couponLimit) {
+      return toast(
+        "Error",
+        "The coupon amount is very high. Can't apply",
+        "#ef4444"
+      );
     }
 
     if (couponApplied) {
@@ -75,10 +96,16 @@ export function PaymentPage() {
       return;
     }
 
-    setTotalDiscount(prev => prev + coupon.discountAmount);
+    setTotalDiscount((prev) => prev + coupon.discountAmount);
     setSelectedCoupon(coupon);
     setCouponApplied(true);
     toast("Success", "Coupon applied successfully!", "#22c55e");
+  };
+
+  const handleRemoveCoupon = () => {
+    setSelectedCoupon(null);
+    setCouponApplied(false);
+    setTotalDiscount((prev) => prev - selectedCoupon.discountAmount);
   };
 
   const handleSubmit = async () => {
@@ -89,7 +116,9 @@ export function PaymentPage() {
       if (outOfStock) {
         toast(
           "Out of Stock",
-          `${outOfStock.productName} is out of ${Math.abs(outOfStock.stock)} stock...Go to cart page and update the quantity please...`,
+          `${outOfStock.productName} is out of ${Math.abs(
+            outOfStock.stock
+          )} stock...Go to cart page and update the quantity please...`,
           "#f97316"
         );
         return;
@@ -125,15 +154,18 @@ export function PaymentPage() {
         totalPrice,
         totalDiscount,
         couponUsed: couponApplied,
-        couponCode: selectedCoupon?.couponCode
+        couponCode: selectedCoupon?.couponCode,
       }).unwrap();
 
       setModalOpen(false);
 
-      if (paymentMethod === "cash on delivery" || paymentMethod === "pay from wallet") {
+      if (
+        paymentMethod === "cash on delivery" ||
+        paymentMethod === "pay from wallet"
+      ) {
         navigate("/order-success-page");
-      } else if (paymentMethod === "razorpay") {
-        const options = {
+      }else if (paymentMethod === "razorpay") {
+        const options = { 
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: result.amount,
           currency: "INR",
@@ -142,7 +174,7 @@ export function PaymentPage() {
           order_id: result.id,
           handler: async function (response) {
             try {
-              await razorpayPayment({
+              await razorpayPayment({ 
                 totalPrice,
                 totalDiscount,
                 couponUsed: couponApplied,
@@ -152,26 +184,52 @@ export function PaymentPage() {
                 razorpayPaymentId: response.razorpay_payment_id,
                 razorpayOrderId: response.razorpay_order_id,
                 razorpaySignature: response.razorpay_signature,
+                paymentStatus: "success",
               }).unwrap();
               navigate("/order-success-page");
             } catch (error) {
-              console.log(error);
-              toast("Error", "Payment failed!", "#ef4444");
+              console.error("Payment success handling failed:", error);
+              navigate("/payment-failure");
             }
+          },
+          theme: {
+            color: "#3399cc",
           },
           prefill: {
             name: selectedAddress?.fullName,
             email: "customer@example.com",
             contact: selectedAddress?.phone,
           },
-          theme: {
-            color: "#3399cc",
+          retry: {
+            enabled: false,
           },
         };
-
+      
         const paymentObject = new window.Razorpay(options);
+      
         paymentObject.open();
+      
+        paymentObject.on("payment.failed", async function () {
+          try {
+            await razorpayPayment({
+              totalPrice,
+              totalDiscount,
+              couponUsed: couponApplied,
+              couponCode: selectedCoupon?.couponCode,
+              addressId: selectedAddress._id,
+              paymentMethod: "razorpay",
+              razorpayPaymentId: null,
+              razorpayOrderId: result.id,
+              razorpaySignature: null,
+              paymentStatus: "failed",
+            }).unwrap();
+            navigate("/payment-failed-page");
+          } catch (error) {
+            console.error("Failed to handle payment failure:", error);
+          }
+        });
       }
+      
     } catch (error) {
       console.log(error);
       toast("Error", "Order placement failed!", "#ef4444");
@@ -199,11 +257,22 @@ export function PaymentPage() {
             className="space-y-4"
           >
             <div className="flex items-center space-x-4 border p-4 rounded-lg">
-              <RadioGroupItem value="cash on delivery" id="cash" />
-              <Label htmlFor="cash" className="flex items-center gap-2">
-                <Truck className="h-5 w-5" />
-                Cash on delivery
-              </Label>
+              <RadioGroupItem
+                disabled={totalPrice > 1000}
+                value="cash on delivery"
+                id="cash"
+              />
+              <div className="space-y-3">
+                <Label htmlFor="cash" className="flex items-center gap-2">
+                  <Truck className="h-5 w-5" />
+                  Cash on delivery
+                </Label>
+                {totalPrice > 1000 && (
+                  <p className="text-red-500 text-sm">
+                    Not available for more than 1000/-
+                  </p>
+                )}
+              </div>
             </div>
             <div className="flex items-center space-x-4 border p-4 rounded-lg">
               <RadioGroupItem value="razorpay" id="razorpay" />
@@ -234,6 +303,7 @@ export function PaymentPage() {
           <Button
             onClick={handleSubmit}
             className="w-full mt-6 bg-black text-white hover:bg-gray-800"
+            disabled={totalPrice > 1000 && paymentMethod == "cash on delivery"}
           >
             Continue
           </Button>
@@ -256,11 +326,13 @@ export function PaymentPage() {
               <span className="text-gray-600">Value of Products</span>
               <span className="font-medium">₹{totalPrice}</span>
             </div>
-            
+
             <div className="border rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-gray-600">Have a coupon?</span>
-                <Button 
+                <span className="text-sm font-medium text-gray-600">
+                  Have a coupon?
+                </span>
+                <Button
                   variant="outline"
                   onClick={() => setCouponModalOpen(true)}
                   className="flex items-center gap-2"
@@ -270,18 +342,21 @@ export function PaymentPage() {
                 </Button>
               </div>
               <div className="flex gap-2">
-                <Input 
+                <Input
                   placeholder="Enter coupon code"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
                   disabled={couponApplied}
                 />
-                <Button 
+                <Button
                   onClick={handleApplyCoupon}
                   disabled={couponApplied || !couponCode}
                 >
                   Apply
                 </Button>
+                {couponApplied && (
+                  <Button onClick={handleRemoveCoupon}>Remove</Button>
+                )}
               </div>
               {selectedCoupon && (
                 <div className="mt-2 text-sm text-green-600">
@@ -290,9 +365,19 @@ export function PaymentPage() {
               )}
             </div>
 
+            {couponApplied && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Coupon Amount (-)</span>
+                <span className="text-green-500 font-medium">
+                  ₹{selectedCoupon?.discountAmount}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between">
-              <span className="text-gray-600">Discount (-)</span>
-              <span className="text-green-500 font-medium">₹{totalDiscount}.00</span>
+              <span className="text-gray-600">Total Discount (-)</span>
+              <span className="text-green-500 font-medium">
+                ₹{totalDiscount}.00
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Estimated GST (+)</span>
@@ -305,15 +390,21 @@ export function PaymentPage() {
             <div className="border-t pt-4 mt-4">
               <div className="flex justify-between font-semibold">
                 <span>Order Total</span>
-                <span className="text-xl">₹{totalPrice - totalDiscount} /-</span>
+                <span className="text-xl">
+                  ₹{totalPrice - totalDiscount} /-
+                </span>
               </div>
             </div>
 
             <div className="mt-6 bg-black text-white p-4 rounded-lg">
               <div className="space-y-1">
                 <p className="font-medium">{selectedAddress?.fullName}</p>
-                <p>{selectedAddress?.country}, {selectedAddress?.state}</p>
-                <p>{selectedAddress?.city}, {selectedAddress?.pincode}</p>
+                <p>
+                  {selectedAddress?.country}, {selectedAddress?.state}
+                </p>
+                <p>
+                  {selectedAddress?.city}, {selectedAddress?.pincode}
+                </p>
                 <p>No: {selectedAddress?.phone}</p>
                 <p>{selectedAddress?.landMark}</p>
               </div>
@@ -332,10 +423,15 @@ export function PaymentPage() {
               <div key={coupon._id} className="border rounded-lg p-4 space-y-2">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="font-semibold text-lg">₹{coupon.discountAmount} OFF</p>
-                    <p className="text-sm text-gray-600">Min. Purchase: ₹{coupon.minPurchaseAmount}</p>
+                    <p className="font-semibold text-lg">
+                      ₹{coupon.discountAmount} OFF
+                    </p>
                     <p className="text-sm text-gray-600">
-                      Valid till: {new Date(coupon.expirationDate).toLocaleDateString()}
+                      Min. Purchase: ₹{coupon.minPurchaseAmount}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Valid till:{" "}
+                      {new Date(coupon.expirationDate).toLocaleDateString()}
                     </p>
                   </div>
                   <Button
@@ -348,7 +444,9 @@ export function PaymentPage() {
                     Copy Code
                   </Button>
                 </div>
-                <p className="text-xs bg-gray-100 p-2 rounded">Code: {coupon.couponCode}</p>
+                <p className="text-xs bg-gray-100 p-2 rounded">
+                  Code: {coupon.couponCode}
+                </p>
               </div>
             ))}
           </div>
@@ -362,7 +460,11 @@ export function PaymentPage() {
         onConfirm={confirmSubmit}
         title="Are you sure"
         message="If you confirm this order, You can manage the order on Your Orders"
-        confirmText={paymentMethod === "cash on delivery" ? "Place Order" : "Place Order & Pay"}
+        confirmText={
+          paymentMethod === "cash on delivery"
+            ? "Place Order"
+            : "Place Order & Pay"
+        }
         cancelText="Cancel"
       />
     </div>

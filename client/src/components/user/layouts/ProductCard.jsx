@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useAddToWishlistMutation } from '@/services/api/user/userApi';
+import { useToaster } from '@/utils/Toaster';
 
 export const ProductCard = ({
   thumbnailImage,
@@ -16,12 +17,14 @@ export const ProductCard = ({
   description,
   price,
   productId,
+  variantId,
   rating = 4.5,
   reviewCount = 123,
   isNew = false,
   discountPercentage = 0,
   discountedPrice
 }) => {
+  const toast = useToaster()
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [addToWishlist] = useAddToWishlistMutation()
@@ -33,12 +36,17 @@ export const ProductCard = ({
   };
 
   const handleAddToWishlist = async() => {
-    console.log("Bitch")
-    console.log(productId)
     try {
-      await addToWishlist({productId}).unwrap()
+
+      const response = await addToWishlist({productId, variantId}).unwrap()
+      toast("Success", response?.message, "#22c55e");
     } catch (error) {
-      console.log(error)
+      if (error.status == 400) {
+        toast("Item already  in cart", error?.data?.message, "#f97316");
+      } else {
+        console.log(error);
+        toast("Error", "An Error Occured Please try again later..", "#ff0000");
+      }
       
     }
   }

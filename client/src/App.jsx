@@ -43,6 +43,8 @@ import { CouponPage } from "./pages/admin/CouponPage";
 import { CouponAddPage } from "./pages/admin/CouponAddPage";
 import { OfferEditPage } from "./pages/admin/OfferEditPage";
 import { CouponEditPage } from "./pages/admin/CouponEditPage";
+import { ErrorPage } from "./pages/user/ErrorPage";
+import { PaymentFailedPage } from "./pages/user/PaymentFailedPage";
 
 const App = () => {
   return (
@@ -66,31 +68,24 @@ const App = () => {
         {/* <Route
           element={<UserProtectedRoute allowedRoles={["user", "admin"]} />}
         > */}
-          <Route path="/home" element={<UserHomePage />} />
+        <Route path="/home" element={<UserHomePage />} />
+        <Route path="/*" element={<ErrorPage />} />
 
-          <Route path="/product-details/:id" element={<ProductDetailsPage />} />
-          <Route path="/product-list" element={<ProductListPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/profile" element={<UserProfilePage />} />
-          <Route path="/address" element={<UserAddressPage />} />
-          <Route path="/change-password" element={<UserChangePassword />} />
-          <Route path="/change-password" element={<UserChangePassword />} />
-          <Route path="/checkout-page" element={<CheckoutPage />} />
-          <Route path="/payment-page" element={<PaymentPage />} />
-          <Route path="/order-success-page" element={<OrderSuccessPage />} />
-          <Route path="/my-orders" element={<OrdersPage />} />
-          <Route
-            path="/order-details/:orderId"
-            element={<OrderDetailsPage />}
-          />
-          <Route
-            path="/wishlist"
-            element={<WishListPage />}
-          />
-          <Route
-            path="/wallet"
-            element={<WalletPage />}
-          />
+        <Route path="/product-details/:id" element={<ProductDetailsPage />} />
+        <Route path="/product-list" element={<ProductListPage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/profile" element={<UserProfilePage />} />
+        <Route path="/address" element={<UserAddressPage />} />
+        <Route path="/change-password" element={<UserChangePassword />} />
+        <Route path="/change-password" element={<UserChangePassword />} />
+        <Route path="/checkout-page" element={<CheckoutPage />} />
+        <Route path="/payment-page" element={<PaymentPage />} />
+        <Route path="/order-success-page" element={<OrderSuccessPage />} />
+        <Route path="/my-orders" element={<OrdersPage />} />
+        <Route path="/order-details/:orderId" element={<OrderDetailsPage />} />
+        <Route path="/wishlist" element={<WishListPage />} />
+        <Route path="/wallet" element={<WalletPage />} />
+        <Route path="/payment-failed-page" element={<PaymentFailedPage />} />
         {/* </Route>rs */}
 
         {/* Admin Protected Routes */}
@@ -118,15 +113,24 @@ const App = () => {
             element={<ProductsVariantsAddPage />}
           />
           <Route path="/admin/orders" element={<OrdersListPage />} />
-          <Route path="/admin/orders/order-manage/:orderId" element={<OrderManagePage />} />
+          <Route
+            path="/admin/orders/order-manage/:orderId"
+            element={<OrderManagePage />}
+          />
           <Route path="/admin/offers" element={<OfferPage />} />
           <Route path="/admin/offers/add-offer" element={<OfferAddPage />} />
-          <Route path="/admin/offers/edit-offer/:id" element={<OfferEditPage />} />
+          <Route
+            path="/admin/offers/edit-offer/:id"
+            element={<OfferEditPage />}
+          />
           <Route path="/admin/sales-report" element={<SalesReportPage />} />
           <Route path="/admin/returns" element={<ReturnItemsPage />} />
           <Route path="/admin/coupons" element={<CouponPage />} />
           <Route path="/admin/coupons/add-coupon" element={<CouponAddPage />} />
-          <Route path="/admin/coupons/edit-coupon/:id" element={<CouponEditPage />} />
+          <Route
+            path="/admin/coupons/edit-coupon/:id"
+            element={<CouponEditPage />}
+          />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -42,7 +42,7 @@ export function SalesReportPage() {
     dateRange 
   });
 
-  const { sales = [], totalRevenue = 0, ordersCount = 0, customers = 0, totalPage = 1, currentPage = 1 } = data || {};
+  const { sales = [], totalRevenue = 0, ordersCount = 0, customers = 0, totalPage = 1, currentPage = 1, totalDiscount } = data || {};
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
@@ -271,7 +271,7 @@ export function SalesReportPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-8">
+          <div className="grid grid-cols-4 gap-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -297,6 +297,15 @@ export function SalesReportPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{customers}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Discount</CardTitle>
+                <Users className="h-4 w-4 text-cyan-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{totalDiscount}</div>
               </CardContent>
             </Card>
           </div>

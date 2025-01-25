@@ -2,6 +2,7 @@ import express from "express";
 import {
   addAddress,
   addToCart,
+  allProductsForSearch,
   cartItems,
   changePassword,
   checkoutPage,
@@ -21,7 +22,7 @@ import {
 } from "../controllers/userController.js";
 import { verifyRole, verifyToken } from "../middewares/jwt-verify.js";
 import { getProductById } from "../controllers/productController.js";
-import { cancelItem, cancelOrder, myOrders, orderDetails, placeOrder, razorPayPayment, returnItem } from "../controllers/orderControllers.js";
+import { cancelItem, cancelOrder, myOrders, orderDetails, placeOrder, razorPayPayment, retryOrder, retryRazorpayPayment, returnItem } from "../controllers/orderControllers.js";
 import { addToWishlist, removeWishlistItem, wishlist } from "../controllers/wishlistController.js";
 import { addMoneyToWallet, getWallet, verifyPayment } from "../controllers/walletController.js";
 const router = express.Router();
@@ -29,6 +30,7 @@ const router = express.Router();
 router.get("/home", verifyToken, userHome);
 router.get("/product-details/:id", verifyToken, getProductById);
 router.get("/product-page", verifyToken, productPage);
+router.get("/all-products-for-search", verifyToken, allProductsForSearch);
 router.post("/add-to-cart", verifyToken, addToCart);
 router.get("/cart", verifyToken, cartItems);
 router.put("/update-quantity", verifyToken, updateCartQuantity);
@@ -53,9 +55,9 @@ router.get("/order-details/:id", verifyToken, orderDetails)
 router.patch("/cancel-order", verifyToken, cancelOrder)
 router.patch("/cancel-item", verifyToken, cancelItem)
 router.patch("/return-item", verifyToken, returnItem)
-
-
 router.post("/razorpay-payment", verifyToken, razorPayPayment )
+router.post("/retry-order", verifyToken, retryOrder)
+router.patch("/retry-razorpay-payment", verifyToken, retryRazorpayPayment)
 
 
 router.post("/add-to-wishlist", verifyToken, addToWishlist)

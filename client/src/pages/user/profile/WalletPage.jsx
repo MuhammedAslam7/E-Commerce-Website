@@ -158,7 +158,6 @@ export const WalletPage = () => {
             </CardContent>
           </Card>
 
-          {/* Transaction History Modal */}
           <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
@@ -188,7 +187,7 @@ export const WalletPage = () => {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-lg font-semibold text-green-600">
+                          <p className={`text-lg font-semibold ${transaction.description =="Order Payment" ? "text-red-600" : "text-green-500"}`}>
                             ₹{transaction.amount.toLocaleString()}
                           </p>
                         </div>

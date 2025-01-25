@@ -30,13 +30,36 @@ export const userApi = createApi({
       providesTags: ["ProductDetails"],
     }),
     productsList: builder.query({
-      query: ({ page, limit, minPrice, maxPrice, categories, brands }) => ({
-        url: `user/product-page?page=${page}&limit=${limit}&minPrice=${minPrice}&maxPrice=${maxPrice}&categories=${categories?.join(
-          ","
-        )}&brands=${brands?.join(",")}`,
+      query: ({
+        page,
+        limit,
+        minPrice,
+        maxPrice,
+        categories,
+        brands,
+        sort,
+        search,
+      }) => ({
+        url: `user/product-page`,
         method: "GET",
+        params: {
+          page,
+          limit,
+          minPrice,
+          maxPrice,
+          categories: categories?.join(","),
+          brands: brands?.join(","),
+          sort,
+          search,
+        },
       }),
     }),
+    allProductsForSearch: builder.query({
+      query: () => ({
+        url: "user/all-products-for-search",
+      }),
+    }),
+
     addToCart: builder.mutation({
       query: ({ productId, color }) => ({
         url: "user/add-to-cart",
@@ -55,21 +78,21 @@ export const userApi = createApi({
     verifyStock: builder.query({
       query: () => ({
         url: "user/verify-stock",
-        method: "GET"
+        method: "GET",
       }),
     }),
     checkoutPage: builder.query({
       query: () => ({
         url: "user/checkout-page",
         method: "GET",
-      })
+      }),
     }),
     getPaymentPage: builder.query({
       query: () => ({
         url: "user/payment-page",
         method: "GET",
       }),
-    invalidatesTags: ["Cart"]
+      invalidatesTags: ["Cart"],
     }),
     updateCartQuantity: builder.mutation({
       query: ({ productId, variantId, newQuantity }) => ({
@@ -148,7 +171,7 @@ export const userApi = createApi({
         totalPrice,
         totalDiscount,
         couponUsed,
-        couponCode
+        couponCode,
       }) => ({
         url: "user/place-order",
         method: "POST",
@@ -158,10 +181,10 @@ export const userApi = createApi({
           totalPrice,
           totalDiscount,
           couponUsed,
-          couponCode
+          couponCode,
         },
       }),
-      invalidatesTags: ["ProductDetails", "Cart", "MyOrders"],
+      invalidatesTags: ["ProductDetails", "Cart", "MyOrders", "Wallet"],
     }),
     myOrders: builder.query({
       query: () => ({
@@ -207,12 +230,6 @@ export const userApi = createApi({
         method: "GET",
       }),
     }),
-    allProductsForSearch: builder.query({
-      query: () => ({
-        url: "user/items-for-search",
-        method: "GET",
-      }),
-    }),
     razorpayPayment: builder.mutation({
       query: ({
         addressId,
@@ -223,7 +240,8 @@ export const userApi = createApi({
         totalPrice,
         totalDiscount,
         couponUsed,
-        couponCode
+        couponCode,
+        paymentStatus,
       }) => ({
         url: "user/razorpay-payment",
         method: "POST",
@@ -236,15 +254,17 @@ export const userApi = createApi({
           totalPrice,
           totalDiscount,
           couponUsed,
-          couponCode
+          couponCode,
+          paymentStatus,
         },
       }),
+      invalidatesTags: ["ProductDetails", "Cart", "MyOrders", "Wallet"],
     }),
     addToWishlist: builder.mutation({
-      query: ({ productId }) => ({
+      query: ({ productId, variantId }) => ({
         url: "user/add-to-wishlist",
         method: "POST",
-        body: { productId },
+        body: { productId, variantId },
       }),
       invalidatesTags: ["Wishlist"],
     }),
@@ -256,10 +276,10 @@ export const userApi = createApi({
       providesTags: ["Wishlist"],
     }),
     removeWishlistItem: builder.mutation({
-      query: ({ productId }) => ({
+      query: ({ productId, variantId }) => ({
         url: "user/wishlist-remove-item",
         method: "DELETE",
-        body: { productId },
+        body: { productId, variantId },
       }),
       invalidatesTags: ["Wishlist"],
     }),
@@ -285,6 +305,34 @@ export const userApi = createApi({
       }),
       invalidatesTags: ["Wallet"],
     }),
+    retryOrder: builder.mutation({
+      query: ({ paymentMethod, orderId }) => ({
+        url: "/user/retry-order",
+        method: "POST",
+        body: { paymentMethod, orderId },
+      }),
+      invalidatesTags: ["MyOrders"],
+    }),
+    retryRazorpayPayment: builder.mutation({
+      query: ({
+        orderId,
+        razorpayPaymentId,
+        razorpayOrderId,
+        razorpaySignature,
+        paymentStatus,
+      }) => ({
+        url: "user/retry-razorpay-payment",
+        method: "PATCH",
+        body: {
+          orderId,
+          razorpayPaymentId,
+          razorpayOrderId,
+          razorpaySignature,
+          paymentStatus,
+        },
+      }),
+      invalidatesTags: ["MyOrders"]
+    }),
   }),
 });
 
@@ -292,6 +340,7 @@ export const {
   useUserHomeQuery,
   useProductDetailsQuery,
   useProductsListQuery,
+  useAllProductsForSearchQuery,
   useAddToCartMutation,
   useCartProductsQuery,
   useLazyVerifyStockQuery,
@@ -313,7 +362,6 @@ export const {
   useCancelItemMutation,
   useReturnItemMutation,
   useGetCategoryBrandQuery,
-  useAllProductsForSearchQuery,
   useRazorpayPaymentMutation,
   useAddToWishlistMutation,
   useGetWishlistQuery,
@@ -321,4 +369,6 @@ export const {
   useGetWalletQuery,
   useAddMoneyToWalletMutation,
   useVerifyPaymentMutation,
+  useRetryOrderMutation,
+  useRetryRazorpayPaymentMutation,
 } = userApi;

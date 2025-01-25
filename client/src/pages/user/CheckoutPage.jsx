@@ -36,6 +36,7 @@ export function CheckoutPage() {
   const [selectedAddress, setSelectedAddress] = useState(
     response?.addresses?.[0]
   );
+  console.log(selectedAddress);
 
   const { cart } = response || {};
 
@@ -51,7 +52,11 @@ export function CheckoutPage() {
   }, [response]);
 
   const validationSchema = yup.object({
-    fullName: yup.string().required("Full Name is required"),
+    fullName: yup
+      .string()
+      .trim()
+      .matches(/^[A-Za-z\s]+$/, "Full Name can only contain letters and spaces")
+      .required("Full Name is required"),
     email: yup
       .string()
       .email("Invalid Email Address")
@@ -60,11 +65,31 @@ export function CheckoutPage() {
       .string()
       .matches(/^\d{10}$/, "Phone number must be 10 digits")
       .required("Phone number is required"),
-    country: yup.string().required("Country is required"),
-    state: yup.string().required("State is required"),
-    pincode: yup.string().required("Pincode is required"),
-    city: yup.string().required("City is required"),
-    landMark: yup.string().required("Landmark is required"),
+    country: yup
+      .string()
+      .trim()
+      .min(2, "Country must be at least 2 characters long")
+      .required("Country is required"),
+    state: yup
+      .string()
+      .trim()
+      .min(2, "State must be at least 2 characters long")
+      .required("State is required"),
+    pincode: yup
+      .string()
+      .matches(/^\d+$/, "Pincode must only contain numbers")
+      .length(6, "Pincode must be exactly 6 digits")
+      .required("Pincode is required"),
+    city: yup
+      .string()
+      .trim()
+      .min(2, "City must be at least 2 characters long")
+      .required("City is required"),
+    landMark: yup
+      .string()
+      .trim()
+      .min(2, "Landmark must be at least 2 characters long")
+      .required("Landmark is required"),
   });
 
   const formik = useFormik({
@@ -100,6 +125,13 @@ export function CheckoutPage() {
 
   const handleProceed = async () => {
     try {
+      if (selectedAddress == undefined) {
+        return toast(
+          "No-Address",
+          "Please Add a Adress to continue",
+          "#ef4444"
+        );
+      }
       const response = await verifyStock().unwrap();
       const outOfStock = response.find((res) => res.stock < 0);
       if (outOfStock) {
@@ -114,7 +146,7 @@ export function CheckoutPage() {
         return;
       }
 
-      navigate("/payment-page", {state: {selectedAddress}});
+      navigate("/payment-page", { state: { selectedAddress } });
     } catch (error) {
       console.log(error);
     }
@@ -225,6 +257,7 @@ export function CheckoutPage() {
                           name="fullName"
                           value={formik.values.fullName}
                           onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
                           className="mt-1"
                         />
                         {formik.touched.fullName && formik.errors.fullName && (
@@ -246,6 +279,7 @@ export function CheckoutPage() {
                           type="email"
                           value={formik.values.email}
                           onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
                           className="mt-1"
                         />
                         {formik.touched.email && formik.errors.email && (
@@ -267,6 +301,7 @@ export function CheckoutPage() {
                           type="tel"
                           value={formik.values.phone}
                           onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
                           className="mt-1"
                         />
                         {formik.touched.phone && formik.errors.phone && (
@@ -287,6 +322,7 @@ export function CheckoutPage() {
                           name="country"
                           value={formik.values.country}
                           onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
                           className="mt-1"
                         />
                         {formik.touched.country && formik.errors.country && (
@@ -307,6 +343,7 @@ export function CheckoutPage() {
                           name="state"
                           value={formik.values.state}
                           onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
                           className="mt-1"
                         />
                         {formik.touched.state && formik.errors.state && (
@@ -327,6 +364,7 @@ export function CheckoutPage() {
                           name="pincode"
                           value={formik.values.pincode}
                           onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
                           className="mt-1"
                         />
                         {formik.touched.pincode && formik.errors.pincode && (
@@ -347,6 +385,7 @@ export function CheckoutPage() {
                           name="city"
                           value={formik.values.city}
                           onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
                           className="mt-1"
                         />
                         {formik.touched.city && formik.errors.city && (
@@ -367,6 +406,7 @@ export function CheckoutPage() {
                           name="landMark"
                           value={formik.values.landMark}
                           onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
                           className="mt-1"
                         />
                         {formik.touched.landMark && formik.errors.landMark && (

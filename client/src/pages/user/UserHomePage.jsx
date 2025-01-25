@@ -11,10 +11,6 @@ export function UserHomePage() {
 
   const topCard = data?.slice(0, 4);
   const downCard = data?.slice(4);
-  console.log(topCard);
-  console.log(downCard);
-
-  console.log(data);
 
   if (isLoading) {
     return (
@@ -65,7 +61,6 @@ export function UserHomePage() {
         </button>
       </section>
 
-      {/* Super Saver Section */}
       <section className="py-12 bg-gray-100">
         <div className="container mx-auto px-4">
           <h2 className="mb-8 text-center text-3xl font-bold text-gray-900">
@@ -76,19 +71,19 @@ export function UserHomePage() {
               <ProductCard
                 key={product?._id}
                 productId={product?._id}
+                variantId={product?.variants[0]._id}
                 productName={product?.productName}
                 description={product?.description}
                 price={product?.price}
                 thumbnailImage={product?.thumbnailImage}
                 discountedPrice={product?.discountedPrice}
-                // images={product.images}
+
               />
             ))}
           </div>
         </div>
       </section>
 
-      {/* New Accessories Section */}
       <section className="relative">
         <img
           src="/banners/hakii-official-9Fu5O1sR4mc-unsplash.jpg"
@@ -111,7 +106,6 @@ export function UserHomePage() {
         </div>
       </section>
 
-      {/* Listen to the Noise Section */}
       <section className="py-12 bg-gray-50">
         <div className="container mx-auto px-4">
           <h2 className="mb-8 text-center text-3xl font-bold text-gray-900">
@@ -122,6 +116,7 @@ export function UserHomePage() {
               <ProductCard
                 key={product?._id}
                 productId={product?._id}
+                variantId={product?.variants[0]._id}
                 productName={product?.productName}
                 description={product.description}
                 price={product?.price}

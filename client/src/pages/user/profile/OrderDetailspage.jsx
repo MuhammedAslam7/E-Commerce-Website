@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, FileText, FileSpreadsheet } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  FileSpreadsheet,
+} from "lucide-react";
 import {
   useOrderByIdQuery,
   useCancelOrderMutation,
@@ -58,7 +63,6 @@ export const OrderDetailsPage = () => {
     const pageWidth = doc.internal.pageSize.width;
     let yPos = 20;
 
-    // Header
     doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
     doc.text("Dune Audio", pageWidth / 2, yPos, { align: "center" });
@@ -68,17 +72,19 @@ export const OrderDetailsPage = () => {
     doc.text("Invoice", pageWidth / 2, yPos, { align: "center" });
     yPos += 20;
 
-    // Order details
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
     doc.text(`Order ID: ${order.orderId}`, 20, yPos);
     yPos += 10;
-    doc.text(`Order Date: ${format(new Date(order.orderAt), "PPpp")}`, 20, yPos);
+    doc.text(
+      `Order Date: ${format(new Date(order.orderAt), "PPpp")}`,
+      20,
+      yPos
+    );
     yPos += 10;
     doc.text(`Status: ${order.orderStatus}`, 20, yPos);
     yPos += 20;
 
-    // Customer details
     doc.setFont("helvetica", "bold");
     doc.text("Customer Details", 20, yPos);
     yPos += 10;
@@ -89,10 +95,13 @@ export const OrderDetailsPage = () => {
     yPos += 10;
     doc.text(`Phone: ${order.address.phone}`, 20, yPos);
     yPos += 10;
-    doc.text(`Address: ${order.address.landMark}, ${order.address.city}, ${order.address.state} ${order.address.pincode}`, 20, yPos);
+    doc.text(
+      `Address: ${order.address.landMark}, ${order.address.city}, ${order.address.state} ${order.address.pincode}`,
+      20,
+      yPos
+    );
     yPos += 20;
 
-    // Products table
     doc.setFont("helvetica", "bold");
     doc.text("Products", 20, yPos);
     yPos += 10;
@@ -134,18 +143,21 @@ export const OrderDetailsPage = () => {
       ["Name", order.address.fullName],
       ["Email", order.address.email],
       ["Phone", order.address.phone],
-      ["Address", `${order.address.landMark}, ${order.address.city}, ${order.address.state} ${order.address.pincode}`],
+      [
+        "Address",
+        `${order.address.landMark}, ${order.address.city}, ${order.address.state} ${order.address.pincode}`,
+      ],
       [],
       ["Products"],
       ["Product", "Quantity", "Price", "Total"],
-      ...order.products.map(product => [
+      ...order.products.map((product) => [
         product.productName,
         product.quantity,
         `₹${product.price.toFixed(2)}`,
-        `₹${(product.price * product.quantity).toFixed(2)}`
+        `₹${(product.price * product.quantity).toFixed(2)}`,
       ]),
       [],
-      ["Total Amount", `₹${order.payableAmount.toFixed(2)}`]
+      ["Total Amount", `₹${order.payableAmount.toFixed(2)}`],
     ];
 
     const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -203,7 +215,7 @@ export const OrderDetailsPage = () => {
       await returnItem({
         orderId: order.orderId,
         itemId: currentReturnItem.itemId,
-        returnReason: formik.values.returnReason
+        returnReason: formik.values.returnReason,
       }).unwrap();
       setReturnItemModal(false);
       setReturnFieldOpenId(null);
@@ -253,7 +265,13 @@ export const OrderDetailsPage = () => {
               <Button
                 disabled={
                   order?.orderStatus == "Cancelled" ||
-                  order?.orderStatus == "Delivered"
+                  order?.orderStatus == "Delivered" ||
+                  order?.products?.some(
+                    (product) =>
+                      product?.itemStatus == "Delivered" ||
+                      product?.itemStatus == "Returned" ||
+                      product?.itemStatus == "Return Requested"
+                  )
                 }
                 onClick={() => setCancelOrderModal(true)}
                 variant="destructive"
@@ -307,13 +325,23 @@ export const OrderDetailsPage = () => {
                   {order?.paymentMethod}
                 </p>
               </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">
-                  Total Amount
-                </h3>
-                <p className="mt-1 text-sm font-medium text-green-600">
-                  ₹{order?.payableAmount?.toFixed(2)}
-                </p>
+              <div className="flex space-x-5">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">
+                    Total Amount
+                  </h3>
+                  <p className="mt-1 text-sm font-medium text-green-600">
+                    ₹{order?.payableAmount?.toFixed(2)}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">
+                    Total Discount
+                  </h3>
+                  <p className="mt-1 text-sm font-medium text-green-600">
+                    ₹{order?.totalDiscount?.toFixed(2)}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -424,19 +452,19 @@ export const OrderDetailsPage = () => {
                                 className="text-orange-500 hover:text-red-900"
                                 onClick={() => {
                                   setCurrentReturnItem(product);
-                                  setReturnFieldOpenId(product?.itemId)}}
+                                  setReturnFieldOpenId(product?.itemId);
+                                }}
                               >
                                 Return Item
                               </Button>
                             )}
 
                             {product?.itemStatus !== "Delivered" &&
-                              product?.itemStatus !== "Return Requested" && product?.itemStatus !== "Returned" && (
+                              product?.itemStatus !== "Return Requested" &&
+                              product?.itemStatus !== "Returned" && (
                                 <Button
                                   onClick={() => handleCancelItem(product)}
-                                  disabled={
-                                    product?.itemStatus == "Cancelled"
-                                  }
+                                  disabled={product?.itemStatus == "Cancelled"}
                                   variant="ghost"
                                   size="sm"
                                   className="text-red-600 hover:text-red-900"
@@ -466,10 +494,7 @@ export const OrderDetailsPage = () => {
                                       </div>
                                     )}
                                 </div>
-                                <Button
-                                  className="w-13 h-7"
-                                  type="submit"
-                                >
+                                <Button className="w-13 h-7" type="submit">
                                   Submit
                                 </Button>
                               </form>
@@ -538,4 +563,3 @@ export const OrderDetailsPage = () => {
     </div>
   );
 };
-
