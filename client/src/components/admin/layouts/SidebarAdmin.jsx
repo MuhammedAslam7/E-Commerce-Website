@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BiSolidOffer } from "react-icons/bi"
-import { RiCoupon2Fill } from "react-icons/ri"
+import { BiSolidOffer } from "react-icons/bi";
+import { RiCoupon2Fill } from "react-icons/ri";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -14,8 +14,6 @@ import {
   FileText,
   Grid,
   Tag,
-  
-
 } from "lucide-react";
 
 const navItems = [
@@ -31,16 +29,20 @@ const navItems = [
 ];
 
 export function SidebarAdmin() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   return (
     <aside className="w-64 bg-white dark:bg-gray-800 transition-colors duration-300 shadow-lg">
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-between h-16 px-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-          <div className="flex items-center gap-2">
-            <Package className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            <h1 className="text-lg font-bold text-gray-800 dark:text-white">
-              DUNE AUDIO
-            </h1>
+          <div className="flex items-center gap-3">
+            <div>
+              <img
+                src="/logo/IMG_20250127_121203.jpg"
+                alt="Dune Logo"
+                className="h-10 w-auto object-fill ml-3 rounded-sm"
+              />
+            </div>
+            <span className="text-3xl font-jacquard">Dune Audio</span>
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto py-4 px-3">
@@ -56,7 +58,11 @@ export function SidebarAdmin() {
               </span>
             </Link>
           ))}
-          <Button onClick={() => navigate("/admin/sales-report")} className="w-full mt-4" variant="outline">
+          <Button
+            onClick={() => navigate("/admin/sales-report")}
+            className="w-full mt-4"
+            variant="outline"
+          >
             <FileText className="mr-2 h-4 w-4" />
             Sales Report
           </Button>

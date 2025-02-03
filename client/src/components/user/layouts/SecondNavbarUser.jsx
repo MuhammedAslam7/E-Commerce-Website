@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 const navItems = [
   { name: "Home", href: "/home" },
   { name: "Products", href: "/product-list" },
-  { name: "About", href: "/about" },
+  { name: "About", href: "/about-page" },
   { name: "Contact Us", href: "/contact" },
 ];
 

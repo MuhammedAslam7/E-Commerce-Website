@@ -5,8 +5,10 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        jacquard: ['Jacquard 24"', "sans-serif"],
+        jacquard: ['"Jacquard 24"', 'sans-serif'],
+        playwrite: ['"Playwrite IN"', 'sans-serif'],
         rubik: ["Rubik", "sans-serif"],
+        
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -42,7 +42,7 @@ export const ProductCard = ({
       toast("Success", response?.message, "#22c55e");
     } catch (error) {
       if (error.status == 400) {
-        toast("Item already  in cart", error?.data?.message, "#f97316");
+        toast("Item already  in Wishlist", error?.data?.message, "#f97316");
       } else {
         console.log(error);
         toast("Error", "An Error Occured Please try again later..", "#ff0000");

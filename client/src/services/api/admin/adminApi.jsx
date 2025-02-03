@@ -211,11 +211,8 @@ export const adminApi = createApi({
     }),
     invalidatesTags: ["Offers", "OfferEdit"]
   }),
-    dashboard: builder.query({
-      query: () => ({
-        url: "admin/dasboard",
-        method: "GET",
-      }),
+  dashboard: builder.query({
+      query: (period = 'month') => `admin/dashboard?period=${period}`,
     }),
     getSales: builder.query({
       query: (params) => ({

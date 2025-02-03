@@ -98,12 +98,12 @@ export const NavbarUser = ({ itemsInCart }) => {
           <Link to="/" className="flex items-center gap-2">
             <div>
               <img
-                src="/logo/a-logo-for-an-e-commerce-website-selling_e0mnzUsxQQenSmAK3BEthw_xnvkJPvaTGi_ioiYxnBVkw.jpeg"
+                src="/logo/IMG_20250127_121203.jpg"
                 alt="Dune Logo"
-                className="h-14 w-14 object-fill rounded-sm"
+                className="h-[65px] w-auto object-fill ml-3 rounded-sm"
               />
             </div>
-            <span className="text-xl font-jacquard">Dune Audio</span>
+            <span className="text-4xl font-jacquard">Dune Audio</span>
           </Link>
 
           <div className="flex-1 gap-3 max-w-2xl mx-auto flex mt-3 mb-3" ref={searchRef}>

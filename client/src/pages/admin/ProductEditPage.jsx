@@ -21,14 +21,20 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { Toaster } from "@/components/ui/toaster";
 import { ImageCropModal } from "@/components/admin/modals/ImageCropModal";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToaster } from "@/utils/Toaster";
+import axios from "axios";
 export function ProductEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const toast = useToaster();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [images, setImages] = useState([]);
   const { data, isLoading, error } = useGetProductByIdQuery(id);
@@ -84,13 +90,66 @@ export function ProductEditPage() {
       });
     };
   }, [images]);
-  const handleImageUpload = useCallback((files) => {
-    const newImages = Array.from(files).map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-    }));
-    setImages((prevImages) => [...prevImages, ...newImages].slice(0, 5));
-  }, []);
+
+  const handleImageUpload = useCallback(
+    async (variantIndex, files) => {
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
+      const validFiles = Array.from(files).filter((file) => {
+        if (!allowedTypes.includes(file.type)) {
+          toast(
+            "Error",
+            "Only image files (JPEG, PNG, GIF, WEBP) are allowed",
+            "#ff0000"
+          );
+          return false;
+        }
+        return true;
+      });
+
+      validFiles.forEach((file, index) => {
+        console.log(`File ${index}:`, file.name);
+      });
+
+      const imageUrls = await Promise.all(
+        validFiles.map(async (file) => {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("upload_preset", import.meta.env.VITE_UPLOAD_PRESET);
+          const response = await axios.post(
+            `https://api.cloudinary.com/v1_1/${
+              import.meta.env.VITE_CLOUD_NAME
+            }/image/upload`,
+            formData
+          );
+          return response.data.secure_url;
+        })
+      );
+
+      setFormData((prevFormData) => {
+        const updatedVariants = prevFormData.variants.map((variant, vIndex) => {
+          if (variantIndex == vIndex) {
+            return {
+              ...variant,
+              images: [...variant.images, ...imageUrls],
+            };
+          }
+          return variant;
+        });
+        return {
+          ...prevFormData,
+          variants: updatedVariants,
+        };
+      });
+    },
+    [toast, images]
+  );
+  console.log(formData);
+
   const openCropModal = (image, index) => {
     setCurrentImage(image.preview);
     setCurrentImageIndex(index);
@@ -107,13 +166,29 @@ export function ProductEditPage() {
       return newImages;
     });
   };
-  const removeImage = (index) => {
-    setImages((prevImages) => prevImages.filter((_, i) => i !== index));
+  const removeImage = (variantIndex, imgIndex) => {
+    console.log(imgIndex, variantIndex);
+    setFormData((prevFormData) => {
+      const updatedVariants = prevFormData.variants.map((variant, vIndex) => {
+        if (vIndex == variantIndex) {
+          return {
+            ...variant,
+            images: variant.images.filter((_, i) => i != imgIndex),
+          };
+        }
+        return variant;
+      });
+      return {
+        ...prevFormData,
+        variants: updatedVariants,
+      };
+    });
   };
+
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-  console.log(formData)
+
   const handleVariantChange = (index, field, value) => {
     setFormData((prevData) => {
       const newVariants = [...prevData.variants];
@@ -136,20 +211,14 @@ export function ProductEditPage() {
     try {
       console.log(formData);
       await updateProduct({ id, formData }).unwrap();
-      toast({
-        title: "Success",
-        description: "Product updated successfully!",
-      });
+      toast("Success", "Product Updated Successfully", "#22c55e");
       navigate("/admin/products");
     } catch (error) {
       console.error("Failed to update product:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update product. Please try again.",
-        variant: "destructive",
-      });
+      toast("Error", "Error on updating product", "#ff0000");
     }
   };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -243,11 +312,14 @@ export function ProductEditPage() {
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Headphone">Headphone</SelectItem>
-                          <SelectItem value="Earbuds">Earbuds</SelectItem>
-                          <SelectItem value="Neckband">Neckband</SelectItem>
-                          <SelectItem value="Speaker">Speaker</SelectItem>
-                          <SelectItem value="Earphone">Earphone</SelectItem>
+                          {categories?.map((category) => (
+                            <SelectItem
+                              key={category._id}
+                              value={category.name}
+                            >
+                              {category.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -331,6 +403,25 @@ export function ProductEditPage() {
                               />
                             </div>
                           </div>
+                          <div className="inline-flex flex-col w-full items-center justify-center p-4 mt-3 border border-dashed border-gray-300 rounded-md hover:border-primary transition-colors duration-200 ease-in-out cursor-pointer">
+                            <label
+                              htmlFor={`images-${index}`}
+                              className="cursor-pointer"
+                            >
+                              <Upload className="w-6 h-6 text-gray-400" />
+                            </label>
+                            <Input
+                              id={`images-${index}`}
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              className="hidden"
+                              onChange={(e) =>
+                                handleImageUpload(index, e.target.files)
+                              }
+                            />
+                          </div>
+
                           <div className="mt-2">
                             <Label className="text-sm font-medium">
                               Images
@@ -347,18 +438,7 @@ export function ProductEditPage() {
                                   />
                                   <button
                                     type="button"
-                                    onClick={() => {
-                                      const newVariants = [
-                                        ...formData.variants,
-                                      ];
-                                      newVariants[index].images = newVariants[
-                                        index
-                                      ].images.filter((_, i) => i !== imgIndex);
-                                      setFormData({
-                                        ...formData,
-                                        variants: newVariants,
-                                      });
-                                    }}
+                                    onClick={() => removeImage(index, imgIndex)}
                                     className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                                   >
                                     <X className="h-3 w-3" />
@@ -393,7 +473,6 @@ export function ProductEditPage() {
           </Card>
         </div>
       </main>
-      <Toaster />
       <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
         <DialogContent>
           <DialogHeader>

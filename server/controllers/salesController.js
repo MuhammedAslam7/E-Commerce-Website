@@ -3,34 +3,188 @@ import User from "../model/userModel.js";
 
 export const dashboard = async (req, res) => {
   try {
-    const result = await Order.aggregate([
+    const { period } = req.query;
+    let startDate, endDate;
+
+    switch (period) { 
+      case 'week':
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - 7);
+        endDate = new Date();
+        break;
+      case 'month':
+        startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - 1);
+        endDate = new Date();
+        break;
+      case 'year':
+        startDate = new Date();
+        startDate.setFullYear(startDate.getFullYear() - 1);
+        endDate = new Date();
+        break;
+      default:
+        startDate = new Date(0);
+        endDate = new Date();
+    }
+
+    const revenueData = await Order.aggregate([
       {
-        $match: { orderStatus: "Delivered" },
+        $match: {
+          orderStatus: "Delivered",
+          createdAt: { $gte: startDate, $lte: endDate }
+        }
       },
       {
         $group: {
-          _id: null,
-          totalPayableAmount: { $sum: "$payableAmount" },
-        },
+          _id: period === 'year' ? { $month: "$createdAt" } : { $dayOfMonth: "$createdAt" },
+          revenue: { $sum: "$payableAmount" },
+          orders: { $sum: 1 }
+        }
       },
+      { $sort: { _id: 1 } }
     ]);
 
-    const totalRevenue = result[0]?.totalPayableAmount || 0;
-    const ordersCount = await Order.countDocuments();
+    const categoryData = await Order.aggregate([
+      {
+        $match: {
+          orderStatus: "Delivered",
+          createdAt: { $gte: startDate, $lte: endDate }
+        }
+      },
+      { $unwind: "$products" },
+      {
+        $lookup: {
+          from: "products",
+          localField: "products.productId",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      { $unwind: "$productDetails" },
+      {
+        $group: {
+          _id: "$productDetails.category",
+          value: { $sum: "$products.quantity" }
+        }
+      },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "_id",
+          foreignField: "_id",
+          as: "categoryDetails"
+        }
+      },
+      { $unwind: "$categoryDetails" },
+      {
+        $project: {
+          name: "$categoryDetails.name",
+          value: 1
+        }
+      },
+      { $sort: { value: -1 } },
+      { $limit: 10 }
+    ]);
+
+    const bestSellingProducts = await Order.aggregate([
+      {
+        $match: {
+          orderStatus: "Delivered",
+          createdAt: { $gte: startDate, $lte: endDate }
+        }
+      },
+      { $unwind: "$products" },
+      {
+        $group: {
+          _id: "$products.productId",
+          totalSold: { $sum: "$products.quantity" }
+        }
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      { $unwind: "$productDetails" },
+      {
+        $project: {
+          name: "$productDetails.productName",
+          totalSold: 1
+        }
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: 10 }
+    ]);
+
+    const bestSellingBrands = await Order.aggregate([
+      {
+        $match: {
+          orderStatus: "Delivered",
+          createdAt: { $gte: startDate, $lte: endDate }
+        }
+      },
+      { $unwind: "$products" },
+      {
+        $lookup: {
+          from: "products",
+          localField: "products.productId",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      { $unwind: "$productDetails" },
+      {
+        $group: {
+          _id: "$productDetails.brand",
+          totalSold: { $sum: "$products.quantity" }
+        }
+      },
+      {
+        $lookup: {
+          from: "brands",
+          localField: "_id",
+          foreignField: "_id",
+          as: "brandDetails"
+        }
+      },
+      { $unwind: "$brandDetails" },
+      {
+        $project: {
+          name: "$brandDetails.name",
+          totalSold: 1
+        }
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: 10 }
+    ]);
+
+    const totalRevenue = revenueData.reduce((sum, item) => sum + item.revenue, 0);
+    const ordersCount = revenueData.reduce((sum, item) => sum + item.orders, 0);
     const customers = await User.find({ role: "user" }).countDocuments();
     const recentOrders = await Order.find()
       .populate("userId", "username")
       .sort({ createdAt: -1 })
       .limit(5);
 
-    res
-      .status(200)
-      .json({ totalRevenue, ordersCount, customers, recentOrders });
+    res.status(200).json({
+      totalRevenue,
+      ordersCount,
+      customers,
+      recentOrders,
+      revenueData,
+      categoryData,
+      bestSellingProducts,
+      bestSellingBrands
+    });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
+//////////////////////////////////////////////////////////////////////////////////
 export const salesData = async (req, res) => {
     try {
       const { page = 1, limit = 10, startDate, endDate, dateRange } = req.query;
